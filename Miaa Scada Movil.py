@@ -134,6 +134,13 @@ st.markdown("""
     }
     .label-indicador { color: #888; font-size: 11px; margin: 0; }
     .value-indicador { color: #00d4ff; font-size: 16px; font-weight: bold; margin: 0; }
+    
+    /* Cambiar el color de los labels de los selectbox */
+    div[data-testid="stSelectbox"] label {
+        color: #00d4ff !important;
+        font-weight: bold !important;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
