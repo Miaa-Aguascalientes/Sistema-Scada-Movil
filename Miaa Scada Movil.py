@@ -447,7 +447,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
     df = pd.read_sql(q, engine)
     
-        if not df.empty:
+    if not df.empty:
             df['FECHA'] = pd.to_datetime(df['FECHA'])
             eje_tiempo_global = sorted(df['FECHA'].unique())
             df_interactivo = pd.DataFrame({'FECHA_INDEX': eje_tiempo_global})
