@@ -483,15 +483,33 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
                                              hovertemplate=f"<span style='color:{t['color']};'>■</span> <b>{t['label']}</b>: %{{y:,.2f}}<extra></extra>"))
 
         fig_line.update_layout(
-            template="plotly_dark", height=650, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            template="plotly_dark", 
+            height=450, # Reducimos la altura para que quepa en la pantalla del móvil
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)',
             hovermode="x unified",
-            legend=dict(orientation="h", y=1.08, xanchor="center", x=0.5),
-            xaxis=dict(domain=[0.07, 0.91]),
-            yaxis=dict(title="Caudal (Lps)", color="#00d4ff", position=0.07),
-            yaxis2=dict(title="Presión (Kg/cm²)", color="#00ff00", overlaying="y", side="right", position=0.92),
-            yaxis3=dict(title="Niveles (m)", color="#ff00b4", overlaying="y", side="right", position=0.955),
-            yaxis4=dict(title="Eléctricos (V/A)", color="#ff8000", overlaying="y", side="right", position=1.00),
-            yaxis5=dict(title="Tanque (m)", color="#00ffcc", overlaying="y", side="left", position=0.00)
+            # Leyenda pequeña arriba, centrada
+            legend=dict(
+                orientation="h", 
+                y=1.2, 
+                x=0.5, 
+                xanchor="center",
+                font=dict(size=9) # Fuente más pequeña para que no se desborde
+            ),
+            # Márgenes mínimos para aprovechar el ancho de la pantalla
+            margin=dict(t=80, b=20, l=10, r=10),
+            
+            # Ajuste de ejes para celular
+            xaxis=dict(
+                domain=[0.0, 1.0], # Ocupa todo el ancho
+                showgrid=False
+            ),
+            # Simplificamos los títulos de los ejes para ahorrar espacio
+            yaxis=dict(title="Lps", color="#00d4ff", position=0.0),
+            yaxis2=dict(title="Kg/cm²", color="#00ff00", overlaying="y", side="right", showgrid=False),
+            yaxis3=dict(title="m", color="#ff00b4", overlaying="y", side="right", showgrid=False),
+            yaxis4=dict(title="V/A", color="#ff8000", overlaying="y", side="right", showgrid=False),
+            yaxis5=dict(title="Tanq", color="#00ffcc", overlaying="y", side="left", showgrid=False)
         )
         st.plotly_chart(fig_line, use_container_width=True)
     else:
