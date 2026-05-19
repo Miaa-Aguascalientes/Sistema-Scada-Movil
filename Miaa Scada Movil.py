@@ -285,7 +285,7 @@ def cargar_tanques_desde_db():
         for _, row in df_tq.iterrows():
             n_max = float(row['Nivel_max']) if row.get('Nivel_max') is not None else 1.0
             if n_max <= 0: n_max = 1.0
-            nuevo_mapa_tq[row['Nombre_tq']] = {
+            nuevo_mapa_tq[row['TQ','Nombre_tq']] = {
                 "nombre": row['Nombre_tq'], "tag_nivel": row['nivel_tanque'], "nivel_max": n_max, "sitios": row['Sitios']
             }
         return nuevo_mapa_tq
