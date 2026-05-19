@@ -482,34 +482,31 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
                                              mode='lines', line=dict(color=t['color'], width=0.01), yaxis=t['axis'], showlegend=False,
                                              hovertemplate=f"<span style='color:{t['color']};'>■</span> <b>{t['label']}</b>: %{{y:,.2f}}<extra></extra>"))
 
+# --- LAYOUT OPTIMIZADO PARA CELULAR (SÓLO CAUDAL Y PRESIÓN) ---
         fig_line.update_layout(
             template="plotly_dark", 
-            height=450, # Reducimos la altura para que quepa en la pantalla del móvil
+            height=400, 
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)',
             hovermode="x unified",
-            # Leyenda pequeña arriba, centrada
-            legend=dict(
-                orientation="h", 
-                y=1.2, 
-                x=0.5, 
-                xanchor="center",
-                font=dict(size=9) # Fuente más pequeña para que no se desborde
-            ),
-            # Márgenes mínimos para aprovechar el ancho de la pantalla
+            # Leyenda compacta arriba
+            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9)),
             margin=dict(t=80, b=20, l=10, r=10),
             
-            # Ajuste de ejes para celular
-            xaxis=dict(
-                domain=[0.0, 1.0], # Ocupa todo el ancho
-                showgrid=False
-            ),
-            # Simplificamos los títulos de los ejes para ahorrar espacio
-            yaxis=dict(title="Lps", color="#00d4ff", position=0.0),
-            yaxis2=dict(title="Kg/cm²", color="#00ff00", overlaying="y", side="right", showgrid=False),
-            yaxis3=dict(title="m", color="#ff00b4", overlaying="y", side="right", showgrid=False),
-            yaxis4=dict(title="V/A", color="#ff8000", overlaying="y", side="right", showgrid=False),
-            yaxis5=dict(title="Tanq", color="#00ffcc", overlaying="y", side="left", showgrid=False)
+            # Eje X básico
+            xaxis=dict(domain=[0.05, 0.95], showgrid=False),
+            
+            # EJE Y1: Caudal (Visible)
+            yaxis=dict(title="Caudal (Lps)", color="#00d4ff", showgrid=True, gridcolor='#333'),
+            
+            # EJE Y2: Presión (Visible)
+            yaxis2=dict(title="Presión (Kg/cm²)", color="#00ff00", overlaying="y", side="right", showgrid=False),
+            
+            # OCULTAR EL RESTO DE EJES (y3, y4, y5)
+            # Al poner showticklabels=False y showline=False, desaparecen visualmente
+            yaxis3=dict(visible=False),
+            yaxis4=dict(visible=False),
+            yaxis5=dict(visible=False)
         )
         st.plotly_chart(fig_line, use_container_width=True)
     else:
