@@ -512,7 +512,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         fig.update_layout(
             template="plotly_dark", 
             height=300, 
-            margin=dict(t=50, b=30, l=10, r=10),
+            margin=dict(t=50, b=80, l=10, r=10),
             hovermode="x unified", 
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)',
