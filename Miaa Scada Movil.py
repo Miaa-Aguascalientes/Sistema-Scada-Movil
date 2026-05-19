@@ -420,7 +420,6 @@ with c2:
 st.divider()
 
 # --- 4. RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA ---
-# Función para crear las tarjetas tipo "box"
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
         <div style="border: 2px solid {color}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
@@ -460,37 +459,37 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         
         # --- GRÁFICO CON LEYENDA ARRIBA ---
         fig = go.Figure()
-
-            # Obtenemos los nombres de todas las columnas únicas (Tags) presentes en el DataFrame
-            lista_tags_en_df = df['TagName'].unique()
-            
-            for tag in lista_tags_en_df:
-                df_t = df[df['TagName'] == tag]
-                if not df_t.empty:
-                    fig.add_trace(go.Scatter(
-                        x=df_t['FECHA'], 
-                        y=df_t['VALUE'], 
-                        name=tag,  # Usa el nombre real del tag como leyenda
-                        mode='lines',
-                        line=dict(width=2)
-                    ))
-            
-            # Ajuste de layout: Leyenda arriba y márgenes para que no se corte
-            fig.update_layout(
-                template="plotly_dark", 
-                hovermode="x unified", 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                plot_bgcolor='rgba(0,0,0,0)',
-                legend=dict(
-                    orientation="h",   # Leyenda horizontal
-                    yanchor="bottom",
-                    y=1.05,            # Posición arriba del gráfico
-                    xanchor="center",
-                    x=0.5
-                ),
-                margin=dict(t=100, b=0, l=0, r=0) # Margen superior amplio
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        
+        # Obtenemos los nombres de todas las columnas únicas presentes en el DataFrame
+        lista_tags_en_df = df['TagName'].unique()
+        
+        for tag in lista_tags_en_df:
+            df_t = df[df['TagName'] == tag]
+            if not df_t.empty:
+                fig.add_trace(go.Scatter(
+                    x=df_t['FECHA'], 
+                    y=df_t['VALUE'], 
+                    name=tag,  # Usa el nombre real del tag como leyenda
+                    mode='lines',
+                    line=dict(width=2)
+                ))
+        
+        # Ajuste de layout: Leyenda arriba y márgenes para que no se corte
+        fig.update_layout(
+            template="plotly_dark", 
+            hovermode="x unified", 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(
+                orientation="h",   # Leyenda horizontal
+                yanchor="bottom",
+                y=1.05,            # Posición arriba del gráfico
+                xanchor="center",
+                x=0.5
+            ),
+            margin=dict(t=100, b=0, l=0, r=0) # Margen superior amplio
+        )
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("No hay registros en el rango.")
 
