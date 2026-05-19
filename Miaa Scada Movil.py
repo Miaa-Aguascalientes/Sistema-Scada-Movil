@@ -63,18 +63,10 @@ def get_mysql_scada_engine():
         return None
 
 @st.cache_resource
-def get_postgres_conn():
-    try:
-        # Intentamos conectar
-        conn = psycopg2.connect(**st.secrets["postgres"])
-        # Verificamos si realmente está viva
-        if conn.closed == 0:
-            return conn
-        else:
-            return None
-    except Exception as e:
-        st.error(f"❌ Error crítico de Postgres: {e}")
-        return None
+def get_postgres_engine():
+    # Asegúrate de poner tu cadena de conexión correcta aquí
+    db_url = "postgresql://usuario:contraseña@host:puerto/nombre_bd"
+    return create_engine(db_url, pool_size=5, max_overflow=10)
 
 def verificar_credenciales(usuario_input, password_input):
     try:
@@ -230,15 +222,19 @@ def obtener_historia_7_dias(tag_name):
         return pd.DataFrame()
 
 # 2. Función de sectores corregida
+# 2. Definir la función de sectores usando el engine anterior
 @st.cache_data(ttl=3600)
 def cargar_sectores_poligonos():
-    engine = get_postgres_engine()
+    engine = get_postgres_engine() # Ahora esta función ya existe y es visible
     
-    # Usamos 'with' para que la conexión se abra y cierre solo para esta consulta
-    # SIN cerrar manualmente el objeto motor o la variable global
     try:
         with engine.connect() as conn:
-            query = """SELECT sector, "Pozos_Sector", ... FROM "Sectorizacion"."Sectores_hidr" """
+            query = """SELECT sector, "Pozos_Sector", "Superficie", "Long_Red", "Vol_Prod", 
+                       "U_Domesticos", "U_NoDom", "U_Tot", "Poblacion", "Cons_m3", 
+                       "Faltas_Agua", "Fugas_Tot", "FTC", "FTA", "Vol_Medid", 
+                       "Vol_Fact", "Kwh", "costoKw-hr", "Recaudacion", "Dotacion", "Balance_Estimado"
+                       FROM "Sectorizacion"."Sectores_hidr" """
+            
             df = pd.read_sql(query, conn)
             return df.to_dict('records')
     except Exception as e:
