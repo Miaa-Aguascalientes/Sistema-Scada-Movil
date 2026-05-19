@@ -516,6 +516,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             hovermode="x unified", 
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=True,
             # Configuración de ejes en blanco
             xaxis=dict(
                 title_font=dict(color='white'), 
