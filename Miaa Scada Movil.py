@@ -553,7 +553,7 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     id_tq = st.session_state.activo_id
     info_t = mapa_tanques_dict.get(id_tq)
     
-    st.markdown(f"<h3 style='color:#00d4ff;'>📊 Análisis de Nivel: {info_t['nombre']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#00d4ff;'>🛢️  Análisis de Nivel: {info_t['nombre']}</h3>", unsafe_allow_html=True)
     
     opcion_fecha = st.selectbox("Selecciona rango:", ["Hoy", "Esta Semana", "Últimos 14 días"])
     hoy = datetime.now().date()
@@ -589,7 +589,7 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
     id_rb = st.session_state.activo_id
     info_rb = mapa_rebombeos_dict.get(id_rb)
     
-    st.markdown(f"<h3 style='color:#00d4ff;'>⚡ Estación de Rebombeo: {info_rb['nombre']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#00d4ff;'>🧊  Estación de Rebombeo: {info_rb['nombre']}</h3>", unsafe_allow_html=True)
     
     # Consulta de estados inmediatos
     tags_rb = [info_rb.get('presion'), info_rb.get('nivel_tanque')]
@@ -615,7 +615,7 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
     datos_s = next((s for s in sectores if s['sector'] == sec_id), None)
     
     if datos_s:
-        st.markdown(f"<h3 style='color:#00d4ff;'>🌐 Sector Hidráulico: {sec_id}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color:#00d4ff;'>🏘️ Sector Hidráulico: {sec_id}</h3>", unsafe_allow_html=True)
         
         # Grid compacto de Tarjetas de Información Técnica del Sector (KPIs)
         sc1, sc2, sc3 = st.columns(3)
