@@ -515,7 +515,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             legend=dict(
             orientation="h",
             y=1.2,
-            x=0.7,
+            x=0.3,
             xanchor="center", 
             font=dict(size=9))
         )
