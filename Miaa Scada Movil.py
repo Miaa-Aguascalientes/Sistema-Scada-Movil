@@ -64,11 +64,16 @@ def get_mysql_scada_engine():
 
 @st.cache_resource
 def get_postgres_conn():
-    try: 
+    try:
+        # Intentamos conectar
         conn = psycopg2.connect(**st.secrets["postgres"])
-        return conn
-    except Exception as e: 
-        st.error(f"Error de conexión Postgres: {e}")
+        # Verificamos si realmente está viva
+        if conn.closed == 0:
+            return conn
+        else:
+            return None
+    except Exception as e:
+        st.error(f"❌ Error crítico de Postgres: {e}")
         return None
 
 def verificar_credenciales(usuario_input, password_input):
