@@ -434,23 +434,33 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     
-    opcion_fecha = st.selectbox(
-        "Rango de tiempo:", 
-        ["Hoy", "Últimos 7 días", "Últimos 14 días", "Este Mes"],
-        index=1 
-    )
+# 1. Definición de opciones
+    opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
+    opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2) # Index 2 es "Últimos 7 días"
     
     hoy_dt = datetime.now()
     
-    # Lógica de fechas ajustada para coincidir con la selección
+    # 2. Lógica extendida para calcular fechas
     if opcion_fecha == "Hoy":
+        f_ini = hoy_dt - timedelta(days=0)
+    elif opcion_fecha == "Ayer":
         f_ini = hoy_dt - timedelta(days=1)
     elif opcion_fecha == "Últimos 7 días":
         f_ini = hoy_dt - timedelta(days=7)
     elif opcion_fecha == "Últimos 14 días":
         f_ini = hoy_dt - timedelta(days=14)
-    else:
+    elif opcion_fecha == "Este Mes":
         f_ini = hoy_dt.replace(day=1)
+    elif opcion_fecha == "Último Mes":
+        f_ini = (hoy_dt.replace(day=1) - timedelta(days=1)).replace(day=1)
+    elif opcion_fecha == "Últimos 6 meses":
+        f_ini = hoy_dt - timedelta(days=180)
+    elif opcion_fecha == "Personalizado":
+        rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt])
+        if len(rango) == 2:
+            f_ini, f_fin_sel = rango
+        else:
+            f_ini = hoy_dt - timedelta(days=7)
     # Configuración de Ejes y Colores (Orden Fijo)
     config_visual = [
         ('caudal', "Caudal (Lps)", 'y', '#00d4ff'), 
