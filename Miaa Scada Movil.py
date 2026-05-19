@@ -434,10 +434,23 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     
-    opcion_fecha = st.selectbox("Rango de tiempo:", ["Hoy", "Últimos 7 días", "Últimos 14 días", "Este Mes"])
-    hoy_dt = datetime.now()
-    f_ini = hoy_dt - timedelta(days=1) if opcion_fecha == "Hoy" else (hoy_dt - timedelta(days=7) if opcion_fecha == "Últimos 7 días" else (hoy_dt - timedelta(days=14) if opcion_fecha == "Últimos 14 días" else hoy_dt.replace(day=1)))
+    opcion_fecha = st.selectbox(
+        "Rango de tiempo:", 
+        ["Hoy", "Últimos 7 días", "Últimos 14 días", "Este Mes"],
+        index=1 
+    )
     
+    hoy_dt = datetime.now()
+    
+    # Lógica de fechas ajustada para coincidir con la selección
+    if opcion_fecha == "Hoy":
+        f_ini = hoy_dt - timedelta(days=1)
+    elif opcion_fecha == "Últimos 7 días":
+        f_ini = hoy_dt - timedelta(days=7)
+    elif opcion_fecha == "Últimos 14 días":
+        f_ini = hoy_dt - timedelta(days=14)
+    else:
+        f_ini = hoy_dt.replace(day=1)
     # Configuración de Ejes y Colores (Orden Fijo)
     config_visual = [
         ('caudal', "Caudal (Lps)", 'y', '#00d4ff'), 
