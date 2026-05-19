@@ -515,8 +515,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9))
         )
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("No hay registros en el rango seleccionado.")
+
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
 
