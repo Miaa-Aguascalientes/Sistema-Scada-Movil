@@ -510,16 +510,32 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
                                      hovertemplate=f"<span style='color:{color};'>■</span> <b>{label}</b>: %{{y:,.2f}}<extra></extra>"))
         
         fig.update_layout(
-            template="plotly_dark", height=300, margin=dict(t=30, b=20, l=10, r=10),
-            hovermode="x unified",
+            template="plotly_dark", 
+            height=300, 
+            margin=dict(t=30, b=20, l=10, r=10),
+            hovermode="x unified", 
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)',
+            # Configuración de ejes en blanco
+            xaxis=dict(
+                title_font=dict(color='white'), 
+                tickfont=dict(color='white'), 
+                linecolor='white',
+                gridcolor='rgba(255,255,255,0.1)'
+            ),
+            yaxis=dict(
+                title_font=dict(color='white'), 
+                tickfont=dict(color='white'), 
+                linecolor='white',
+                gridcolor='rgba(255,255,255,0.1)'
+            ),
             legend=dict(
-            orientation="h",
-            y=1.2,
-            x=0.3,
-            xanchor="center", 
-            font=dict(size=5))
+                orientation="h", 
+                y=1.2, 
+                x=0.5, 
+                xanchor="center", 
+                font=dict(size=9, color='white') # También agregué color a la leyenda
+            )
         )
         st.plotly_chart(fig, use_container_width=True)
 
