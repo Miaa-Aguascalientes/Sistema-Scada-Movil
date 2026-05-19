@@ -64,9 +64,13 @@ def get_mysql_scada_engine():
 
 @st.cache_resource
 def get_postgres_engine():
-    # Asegúrate de poner tu cadena de conexión correcta aquí
-    db_url = "postgresql://usuario:contraseña@host:puerto/nombre_bd"
-    return create_engine(db_url, pool_size=5, max_overflow=10)
+    try: 
+        # Simplemente crea y retorna el objeto de conexión
+        conn = psycopg2.connect(**st.secrets["postgres"])
+        return conn
+    except Exception as e: 
+        st.error(f"Error de conexión Postgres: {e}")
+        return None
 
 def verificar_credenciales(usuario_input, password_input):
     try:
@@ -225,21 +229,31 @@ def obtener_historia_7_dias(tag_name):
 # 2. Definir la función de sectores usando el engine anterior
 @st.cache_data(ttl=3600)
 def cargar_sectores_poligonos():
-    engine = get_postgres_engine() # Ahora esta función ya existe y es visible
-    
+    # Obtenemos una conexión fresca
+    conn = psycopg2.connect(**st.secrets["postgres"])
+    if not conn: return []
     try:
-        with engine.connect() as conn:
-            query = """SELECT sector, "Pozos_Sector", "Superficie", "Long_Red", "Vol_Prod", 
-                       "U_Domesticos", "U_NoDom", "U_Tot", "Poblacion", "Cons_m3", 
-                       "Faltas_Agua", "Fugas_Tot", "FTC", "FTA", "Vol_Medid", 
-                       "Vol_Fact", "Kwh", "costoKw-hr", "Recaudacion", "Dotacion", "Balance_Estimado"
-                       FROM "Sectorizacion"."Sectores_hidr" """
-            
-            df = pd.read_sql(query, conn)
-            return df.to_dict('records')
+        query = """
+            SELECT sector, "Pozos_Sector", 
+                   "Superficie", "Long_Red", "Vol_Prod", "U_Domesticos", 
+                   "U_NoDom", "U_Tot", "Poblacion", "Cons_m3", 
+                   "Faltas_Agua", "Fugas_Tot", "FTC", "FTA", 
+                   "Vol_Medid", "Vol_Fact", "Kwh", "costoKw-hr", 
+                   "Recaudacion", "Dotacion", "Balance_Estimado",
+                   ST_AsGeoJSON(ST_Transform(geom, 4326)) as geo 
+            FROM "Sectorizacion"."Sectores_hidr"
+        """
+        # Leemos los datos
+        df = pd.read_sql(query, conn)
+        return df.to_dict('records')
     except Exception as e:
-        st.error(f"Error al ejecutar query de sectores: {e}")
+        st.error(f"Error al cargar sectores: {e}")
         return []
+    finally:
+        # El bloque finally asegura que la conexión se cierre SIEMPRE
+        # al terminar la función, exitosa o fallida.
+        if conn:
+            conn.close()
 
 @st.cache_data(ttl=3600) 
 def cargar_mapa_pozos_desde_db():
