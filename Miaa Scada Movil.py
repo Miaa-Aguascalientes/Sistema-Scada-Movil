@@ -459,7 +459,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         renderizar_tarjeta_kpi(c4, "Nivel Tanq.", f"{df[df['TagName']==info_p.get('nivel_tanque')]['VALUE'].mean():.1f}", "m", "#00d4ff")
         
         # --- GRÁFICO CON LEYENDA ARRIBA ---
-            fig = go.Figure()
+        fig = go.Figure()
 
             # Obtenemos los nombres de todas las columnas únicas (Tags) presentes en el DataFrame
             lista_tags_en_df = df['TagName'].unique()
