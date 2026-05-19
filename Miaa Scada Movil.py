@@ -215,22 +215,28 @@ def obtener_historia_7_dias(tag_name):
 @st.cache_data(ttl=3600)
 def cargar_sectores_poligonos():
     conn = get_postgres_conn()
-    if not conn: return []
+    
+    # AQUÍ ESTÁ EL CAMBIO: Validamos que 'conn' no sea None
+    if conn is None:
+        st.warning("⚠️ No se pudo conectar a la base de datos de Sectores. Intentando recuperar...")
+        return [] 
+    
     try:
-        query = """
-            SELECT sector, "Pozos_Sector", "Superficie", "Long_Red", "Vol_Prod", 
+        query = """SELECT sector, "Pozos_Sector", "Superficie", "Long_Red", "Vol_Prod", 
                    "U_Domesticos", "U_NoDom", "U_Tot", "Poblacion", "Cons_m3", 
                    "Faltas_Agua", "Fugas_Tot", "FTC", "FTA", "Vol_Medid", 
                    "Vol_Fact", "Kwh", "costoKw-hr", "Recaudacion", "Dotacion", "Balance_Estimado"
-            FROM "Sectorizacion"."Sectores_hidr"
-        """
+                   FROM "Sectorizacion"."Sectores_hidr" """
+        
         df = pd.read_sql(query, conn)
         return df.to_dict('records')
     except Exception as e:
-        st.error(f"Error sectores Postgres: {e}")
+        st.error(f"Error al ejecutar query de sectores: {e}")
         return []
     finally:
-        if conn: conn.close()
+        # Siempre cerramos la conexión después de usarla
+        if conn:
+            conn.close()
 
 @st.cache_data(ttl=3600) 
 def cargar_mapa_pozos_desde_db():
