@@ -420,6 +420,7 @@ with c2:
 st.divider()
 
 # --- 4. RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA ---
+# Función para crear las tarjetas tipo "box"
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
         <div style="border: 2px solid {color}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
@@ -438,54 +439,54 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     hoy_dt = datetime.now()
     f_ini = hoy_dt - timedelta(days=1) if opcion_fecha == "Hoy" else (hoy_dt - timedelta(days=7) if opcion_fecha == "Últimos 7 días" else (hoy_dt - timedelta(days=14) if opcion_fecha == "Últimos 14 días" else hoy_dt.replace(day=1)))
     
-    # Recolectar todos los tags incluyendo voltajes y amperajes
+    # Recolectar Tags
     tags_query = [info_p.get(k) for k in ['caudal', 'presion', 'sumergencia', 'nivel_dinamico', 'nivel_tanque'] if info_p.get(k) and info_p.get(k) != 'N/A']
-    tags_query += [v for v in info_p.get('voltajes_l', []) if v and v != 'N/A']
-    tags_query += [a for a in info_p.get('amperajes_l', []) if a and a != 'N/A']
+    tags_query += info_p.get('voltajes_l', []) + info_p.get('amperajes_l', [])
     
-    if tags_query:
-        engine = get_mysql_scada_engine()
-        lista_tags_str = "','".join(list(set(tags_query)))
-        q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{lista_tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
-        df = pd.read_sql(q, engine)
+    engine = get_mysql_scada_engine()
+    tags_str = "','".join(list(set([t for t in tags_query if t])))
+    q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
+    df = pd.read_sql(q, engine)
+    
+    if not df.empty:
+        df['FECHA'] = pd.to_datetime(df['FECHA'])
         
-        if not df.empty:
-            df['FECHA'] = pd.to_datetime(df['FECHA'])
-            
-            # --- RENDERIZADO DE MÉTRICAS (8 Tarjetas compactas) ---
-            # Calculamos promedios
-            stats = {
-                'caudal': df[df['TagName'] == info_p.get('caudal')]['VALUE'].mean() if info_p.get('caudal') in df['TagName'].values else 0.0,
-                'presion': df[df['TagName'] == info_p.get('presion')]['VALUE'].mean() if info_p.get('presion') in df['TagName'].values else 0.0,
-                'sumergencia': df[df['TagName'] == info_p.get('sumergencia')]['VALUE'].mean() if info_p.get('sumergencia') in df['TagName'].values else 0.0,
-                'nivel_t': df[df['TagName'] == info_p.get('nivel_tanque')]['VALUE'].mean() if info_p.get('nivel_tanque') in df['TagName'].values else 0.0
-            }
-            
-            # Fila 1 de métricas
-            c1, c2, c3, c4 = st.columns(4)
-            renderizar_tarjeta_kpi(c1, "Caudal", f"{stats['caudal']:.2f}", "Lps", "#00d4ff")
-            renderizar_tarjeta_kpi(c2, "Presión", f"{stats['presion']:.2f}", "Kg/cm²", "#00ff00")
-            renderizar_tarjeta_kpi(c3, "Nivel Tanq", f"{stats['nivel_t']:.1f}", "m", "#00d4ff")
-            renderizar_tarjeta_kpi(c4, "Sumerg.", f"{stats['sumergencia']:.1f}", "m", "#ff00b4")
-            
-            # Fila 2 de métricas
-            c5, c6, c7, c8 = st.columns(4)
-            renderizar_tarjeta_kpi(c5, "Nivel Din.", f"{df[df['TagName'] == info_p.get('nivel_dinamico')]['VALUE'].mean() if info_p.get('nivel_dinamico') in df['TagName'].values else 0:.1f}", "m", "#ff00b4")
-            renderizar_tarjeta_kpi(c6, "Estado", "Activo" if stats['caudal'] > 0 else "Parado", "", "#ffff00")
-            renderizar_tarjeta_kpi(c7, "Voltaje", "458", "V", "#ffff00")
-            renderizar_tarjeta_kpi(c8, "Amperaje", "129", "A", "#ff9900")
-            
-            # --- GRÁFICO DINÁMICO ---
-            fig = go.Figure()
-            # Añadimos todas las trazas posibles dinámicamente
-            for tag_name in df['TagName'].unique():
-                df_t = df[df['TagName'] == tag_name]
-                fig.add_trace(go.Scatter(x=df_t['FECHA'], y=df_t['VALUE'], name=tag_name, mode='lines'))
-            
-            fig.update_layout(template="plotly_dark", hovermode="x unified", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=30, b=0))
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("No hay registros en el rango.")
+        # --- FILAS DE TARJETAS ---
+        c1, c2, c3, c4 = st.columns(4)
+        renderizar_tarjeta_kpi(c1, "Caudal", f"{df[df['TagName']==info_p.get('caudal')]['VALUE'].mean():.1f}", "Lps", "#00d4ff")
+        renderizar_tarjeta_kpi(c2, "Presión", f"{df[df['TagName']==info_p.get('presion')]['VALUE'].mean():.2f}", "Kg/cm²", "#00ff00")
+        renderizar_tarjeta_kpi(c3, "Sumerg.", f"{df[df['TagName']==info_p.get('sumergencia')]['VALUE'].mean():.1f}", "m", "#ff00b4")
+        renderizar_tarjeta_kpi(c4, "Nivel Tanq.", f"{df[df['TagName']==info_p.get('nivel_tanque')]['VALUE'].mean():.1f}", "m", "#00d4ff")
+        
+        # --- GRÁFICO CON LEYENDA ARRIBA ---
+        fig = go.Figure()
+        
+        # Mapeo de variables
+        graficos = [('caudal', 'Caudal'), ('presion', 'Presión'), ('sumergencia', 'Sumergencia')]
+        for key, name in graficos:
+            tag = info_p.get(key)
+            df_t = df[df['TagName'] == tag]
+            if not df_t.empty:
+                fig.add_trace(go.Scatter(x=df_t['FECHA'], y=df_t['VALUE'], name=name, mode='lines'))
+        
+        # Ajuste de leyenda en la parte superior
+        fig.update_layout(
+            template="plotly_dark", 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            hovermode="x unified",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            margin=dict(t=50, b=0, l=0, r=0)
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No hay registros en el rango.")
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
 
