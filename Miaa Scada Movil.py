@@ -505,9 +505,14 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             tag_name = info_p.get(key, key)
             dft = df[df['TagName'] == tag_name].sort_values('FECHA')
             
-            fig.add_trace(go.Scatter(x=dft['FECHA'], y=dft['VALUE'], name=label, 
-                                     mode='lines', line=dict(color=color, width=2),
-                                     hovertemplate=f"<span style='color:{color};'>■</span> <b>{label}</b>: %{{y:,.2f}}<extra></extra>"))
+            fig.add_trace(go.Scatter(
+                x=dft['FECHA'],
+                y=dft['VALUE'],
+                name=label, 
+                mode='lines+markers',
+                line=dict(color=color, width=2),
+                marker=dict(size=4),
+                hovertemplate=f"<span style='color:{color};'>■</span> <b>{label}</b>: %{{y:,.2f}}<extra></extra>"))
         
         fig.update_layout(
             template="plotly_dark", 
