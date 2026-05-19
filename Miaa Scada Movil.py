@@ -461,8 +461,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             f_ini, f_fin_sel = rango
         else:
             f_ini = hoy_dt - timedelta(days=7)
-
-    
     # Configuración de Ejes y Colores (Orden Fijo)
     config_visual = [
         ('caudal', "Caudal (Lps)", 'y', '#00d4ff'), 
@@ -483,38 +481,42 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         if real_t and real_t != 'N/A': 
             tags_grafico.append({'tag': real_t, 'label': item[1], 'axis': item[2], 'color': item[3]})
     
-# Aseguramos el engine antes de la consulta
     engine = get_mysql_scada_engine()
-    if engine:
-        tags_str = "','".join(list(set([info_p.get(k, k) for k, l, c in config_visual if info_p.get(k, k) != 'N/A'])))
-        q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
-        df = pd.read_sql(q, engine)
-        
-        if not df.empty:
-            grupos = [
-                {"titulo": "Caudal y Presión", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
-                {"titulo": "Voltaje y Amperaje", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
-                {"titulo": "Nivel Tanque", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
-                {"titulo": "Niveles de Pozo", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
-            ]
+    tags_str = "','".join(list(set([t['tag'] for t in tags_grafico])))
+    q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
+    df = pd.read_sql(q, engine)
+    
+# --- ESTRUCTURA DE GRUPOS ---
+    grupos = [
+        {"titulo": "Caudal y Presión", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
+        {"titulo": "Voltaje y Amperaje", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
+        {"titulo": "Nivel Tanque", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
+        {"titulo": "Niveles de Pozo", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
+    ]
 
-            for grupo in grupos:
-                tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
-                if not tags_en_grupo: continue
-                
-                st.subheader(f"📈 {grupo['titulo']}")
-                fig = go.Figure()
-                for key, label, color in tags_en_grupo:
-                    tag_name = info_p.get(key, key)
-                    dft = df[df['TagName'] == tag_name].sort_values('FECHA')
-                    fig.add_trace(go.Scatter(x=dft['FECHA'], y=dft['VALUE'], name=label, mode='lines', line=dict(color=color, width=2)))
-                
-                fig.update_layout(template="plotly_dark", height=300, margin=dict(t=30, b=20, l=10, r=10), hovermode="x unified")
-                st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("No hay registros en el rango seleccionado.")
+    for grupo in grupos:
+        tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
+        if not tags_en_grupo: continue
+        
+        st.subheader(f"📈 {grupo['titulo']}")
+        fig = go.Figure()
+        
+        for key, label, color in tags_en_grupo:
+            tag_name = info_p.get(key, key)
+            dft = df[df['TagName'] == tag_name].sort_values('FECHA')
+            
+            fig.add_trace(go.Scatter(x=dft['FECHA'], y=dft['VALUE'], name=label, 
+                                     mode='lines', line=dict(color=color, width=2),
+                                     hovertemplate=f"<span style='color:{color};'>■</span> <b>{label}</b>: %{{y:,.2f}}<extra></extra>"))
+        
+        fig.update_layout(
+            template="plotly_dark", height=300, margin=dict(t=30, b=20, l=10, r=10),
+            hovermode="x unified", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9))
+        )
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.error("No se pudo conectar al servidor de datos SCADA.")
+        st.warning("No hay registros en el rango seleccionado.")
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
 
