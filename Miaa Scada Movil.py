@@ -140,6 +140,14 @@ st.markdown("""
         color: #00d4ff !important;
         font-weight: bold !important;
     }
+
+    /* Estilo exclusivo para el logo principal dentro de la App */
+    .logo-header {
+        width: 100px; /* Cambia este valor al tamaño que desees para el logo interno */
+        height: auto;
+        display: block;
+        margin: 0 auto 20px auto; /* Centrado y con margen inferior */
+    }
     
 </style>
 """, unsafe_allow_html=True)
