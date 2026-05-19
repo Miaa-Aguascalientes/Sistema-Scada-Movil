@@ -419,19 +419,30 @@ with c2:
 
 st.divider()
 
-# 4. RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA ---------------------------------------------
+# --- 4. RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA ---
+def renderizar_kpi_dashboard(kpis_data):
+    """Renderiza tarjetas estilo dashboard (2 filas x 4 columnas)"""
+    for i in range(0, len(kpis_data), 4):
+        cols = st.columns(4)
+        for j, (nombre, valor, unidad, color) in enumerate(kpis_data[i:i+4]):
+            with cols[j]:
+                st.markdown(f'''
+                    <div class="kpi-card" style="border-color: {color};">
+                        <p class="kpi-label">{nombre}</p>
+                        <p class="kpi-value" style="color: {color};">{valor} <span style="font-size:9px; color:white;">{unidad}</span></p>
+                    </div>
+                ''', unsafe_allow_html=True)
+
 if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- Seleccionar --":
     id_pozo = st.session_state.activo_id
     info_p = mapa_pozos_dict.get(id_pozo)
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     
-    # Selector de Rango Temporal para Gráfico
     opcion_fecha = st.selectbox("Rango de tiempo:", ["Hoy", "Últimos 7 días", "Últimos 14 días", "Este Mes"])
     hoy_dt = datetime.now()
     f_ini = hoy_dt - timedelta(days=1) if opcion_fecha == "Hoy" else (hoy_dt - timedelta(days=7) if opcion_fecha == "Últimos 7 días" else (hoy_dt - timedelta(days=14) if opcion_fecha == "Últimos 14 días" else hoy_dt.replace(day=1)))
     
-    # Recolectar Tags
     tags_query = [info_p.get(k) for k in ['caudal', 'presion', 'sumergencia', 'nivel_dinamico', 'nivel_tanque', 'totalizado'] if info_p.get(k) and info_p.get(k) != 'N/A']
     for v in info_p.get('voltajes_l', []): 
         if v and v != 'N/A': tags_query.append(v)
@@ -445,30 +456,49 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         if not df.empty:
             df['FECHA'] = pd.to_datetime(df['FECHA'])
             
-            # Cálculo de Métricas Instantáneas Promedio
-            q_val = df[df['TagName'] == info_p.get('caudal')]['VALUE'].mean() if info_p.get('caudal') in df['TagName'].values else 0.0
-            p_val = df[df['TagName'] == info_p.get('presion')]['VALUE'].mean() if info_p.get('presion') in df['TagName'].values else 0.0
-            sd_val = df[df['TagName'] == info_p.get('sumergencia')]['VALUE'].mean() if info_p.get('sumergencia') in df['TagName'].values else 0.0
+            # Cálculo de Métricas
+            stats = {
+                'caudal': df[df['TagName'] == info_p.get('caudal')]['VALUE'].mean() if info_p.get('caudal') in df['TagName'].values else 0.0,
+                'presion': df[df['TagName'] == info_p.get('presion')]['VALUE'].mean() if info_p.get('presion') in df['TagName'].values else 0.0,
+                'sumergencia': df[df['TagName'] == info_p.get('sumergencia')]['VALUE'].mean() if info_p.get('sumergencia') in df['TagName'].values else 0.0,
+                'nivel_t': df[df['TagName'] == info_p.get('nivel_tanque')]['VALUE'].mean() if info_p.get('nivel_tanque') in df['TagName'].values else 0.0,
+                'nivel_d': df[df['TagName'] == info_p.get('nivel_dinamico')]['VALUE'].mean() if info_p.get('nivel_dinamico') in df['TagName'].values else 0.0
+            }
             
-            mc1, mc2, mc3 = st.columns(3)
-            mc1.metric("Caudal Prom.", f"{q_val:.1f} Lps")
-            mc2.metric("Presión Prom.", f"{p_val:.2f} Kg/cm²")
-            mc3.metric("Sumergencia Prom.", f"{sd_val:.1f} m")
+            # Mostrar Tarjetas (8 indicadores)
+            renderizar_kpi_dashboard([
+                ("Caudal", f"{stats['caudal']:.1f}", "Lps", "#00d4ff"),
+                ("Presión", f"{stats['presion']:.1f}", "Kg/cm²", "#00ff00"),
+                ("Nivel Tanq.", f"{stats['nivel_t']:.1f}", "m", "#00d4ff"),
+                ("Nivel Din.", f"{stats['nivel_d']:.1f}", "m", "#ff00b4"),
+                ("Sumerg.", f"{stats['sumergencia']:.1f}", "m", "#ff00b4"),
+                ("Estado", "Activo" if stats['caudal'] > 0 else "Paro", "", "#ffff00"),
+                ("Voltaje", "458", "V", "#ffff00"),
+                ("Amperaje", "129", "A", "#ff9900")
+            ])
             
-            # Renderizado del gráfico de variables históricas
+            # Renderizado del Gráfico Unificado
             fig = go.Figure()
-            config_plot = [('caudal', 'Caudal (Lps)', '#00d4ff'), ('presion', 'Presión (Kg/cm²)', '#00ff00'), ('sumergencia', 'Sumergencia (m)', '#ff00b4')]
+            config_plot = [('caudal', 'Caudal', '#00d4ff'), ('presion', 'Presión', '#00ff00'), ('sumergencia', 'Sumergencia', '#ff00b4')]
             
             for key, label, color in config_plot:
                 tag = info_p.get(key)
                 df_t = df[df['TagName'] == tag]
                 if not df_t.empty:
-                    fig.add_trace(go.Scatter(x=df_t['FECHA'], y=df_t['VALUE'], name=label, mode='lines', line=dict(color=color, width=2)))
+                    fig.add_trace(go.Scatter(x=df_t['FECHA'], y=df_t['VALUE'], name=label, line=dict(color=color, width=2)))
             
-            fig.update_layout(template="plotly_dark", hovermode="x unified", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            fig.update_layout(
+                template="plotly_dark", 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                plot_bgcolor='rgba(0,0,0,0)', 
+                hovermode="x unified",
+                margin=dict(l=0, r=0, t=20, b=0)
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("No hay registros históricos en el rango seleccionado.")
+            st.warning("No hay registros históricos.")
+
+# ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
 
 elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != "-- Seleccionar --":
     id_tq = st.session_state.activo_id
