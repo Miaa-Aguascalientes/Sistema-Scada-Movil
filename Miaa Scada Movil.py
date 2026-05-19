@@ -463,52 +463,35 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
     df = pd.read_sql(q, engine)
     
-    if not df.empty:
-        df['FECHA'] = pd.to_datetime(df['FECHA'])
-        eje_tiempo_global = sorted(df['FECHA'].unique())
-        df_interactivo = pd.DataFrame({'FECHA_INDEX': eje_tiempo_global})
-        
-        fig_line = go.Figure()
-        
-        for t in tags_grafico:
-            dft_l = df[df['TagName'] == t['tag']].sort_values('FECHA').copy()
-            if not dft_l.empty:
-                # Traza principal
-                fig_line.add_trace(go.Scatter(x=dft_l['FECHA'], y=dft_l['VALUE'], name=t['label'], mode='lines', 
-                                             line=dict(color=t['color'], width=2.2), yaxis=t['axis'], showlegend=True))
-                # Traza de hover unificado
-                df_maestro = pd.merge_asof(df_interactivo, dft_l, left_on='FECHA_INDEX', right_on='FECHA', direction='backward').bfill()
-                fig_line.add_trace(go.Scatter(x=df_interactivo['FECHA_INDEX'], y=df_maestro['VALUE'], name=t['label'],
-                                             mode='lines', line=dict(color=t['color'], width=0.01), yaxis=t['axis'], showlegend=False,
-                                             hovertemplate=f"<span style='color:{t['color']};'>■</span> <b>{t['label']}</b>: %{{y:,.2f}}<extra></extra>"))
+# --- ESTRUCTURA DE GRUPOS ---
+    grupos = [
+        {"titulo": "Caudal y Presión", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
+        {"titulo": "Voltaje y Amperaje", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
+        {"titulo": "Nivel Tanque", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
+        {"titulo": "Niveles de Pozo", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
+    ]
 
-# --- LAYOUT OPTIMIZADO PARA CELULAR (SÓLO CAUDAL Y PRESIÓN) ---
-        fig_line.update_layout(
-            template="plotly_dark", 
-            height=400, 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)',
-            hovermode="x unified",
-            # Leyenda compacta arriba
-            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9)),
-            margin=dict(t=80, b=20, l=10, r=10),
+    for grupo in grupos:
+        tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
+        if not tags_en_grupo: continue
+        
+        st.subheader(f"📈 {grupo['titulo']}")
+        fig = go.Figure()
+        
+        for key, label, color in tags_en_grupo:
+            tag_name = info_p.get(key, key)
+            dft = df[df['TagName'] == tag_name].sort_values('FECHA')
             
-            # Eje X básico
-            xaxis=dict(domain=[0.05, 0.95], showgrid=False),
-            
-            # EJE Y1: Caudal (Visible)
-            yaxis=dict(title="Caudal (Lps)", color="#00d4ff", showgrid=True, gridcolor='#333'),
-            
-            # EJE Y2: Presión (Visible)
-            yaxis2=dict(title="Presión (Kg/cm²)", color="#00ff00", overlaying="y", side="right", showgrid=False),
-            
-            # OCULTAR EL RESTO DE EJES (y3, y4, y5)
-            # Al poner showticklabels=False y showline=False, desaparecen visualmente
-            yaxis3=dict(visible=False),
-            yaxis4=dict(visible=False),
-            yaxis5=dict(visible=False)
+            fig.add_trace(go.Scatter(x=dft['FECHA'], y=dft['VALUE'], name=label, 
+                                     mode='lines', line=dict(color=color, width=2),
+                                     hovertemplate=f"<span style='color:{color};'>■</span> <b>{label}</b>: %{{y:,.2f}}<extra></extra>"))
+        
+        fig.update_layout(
+            template="plotly_dark", height=300, margin=dict(t=30, b=20, l=10, r=10),
+            hovermode="x unified", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9))
         )
-        st.plotly_chart(fig_line, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("No hay registros en el rango seleccionado.")
 
