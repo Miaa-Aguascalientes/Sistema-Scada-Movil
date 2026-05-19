@@ -589,7 +589,7 @@ else:
     st.markdown("""
     <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(0,212,255,0.02); border: 1px dashed #1f4068; border-radius: 10px;">
         <p style="color: #00d4ff; font-family: 'Orbitron', sans-serif; font-size: 14px; margin: 0;">
-            // SISTEMA SCADA MÓVIL EN ESPERA. SELECCIONE UN ACTIVO SUPERIOR PARA GENERAR LOS GRÁFICOS INTERACTIVOS.
+            Sistema visual Scada. Seleccione una opcion superior para generar el grafico.
         </p>
     </div>
     """, unsafe_allow_html=True)
