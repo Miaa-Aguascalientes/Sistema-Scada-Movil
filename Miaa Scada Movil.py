@@ -447,49 +447,41 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
     df = pd.read_sql(q, engine)
     
-    if not df.empty:
-        df['FECHA'] = pd.to_datetime(df['FECHA'])
-        
-        # --- FILAS DE TARJETAS ---
-        c1, c2, c3, c4 = st.columns(4)
-        renderizar_tarjeta_kpi(c1, "Caudal", f"{df[df['TagName']==info_p.get('caudal')]['VALUE'].mean():.1f}", "Lps", "#00d4ff")
-        renderizar_tarjeta_kpi(c2, "Presión", f"{df[df['TagName']==info_p.get('presion')]['VALUE'].mean():.2f}", "Kg/cm²", "#00ff00")
-        renderizar_tarjeta_kpi(c3, "Sumerg.", f"{df[df['TagName']==info_p.get('sumergencia')]['VALUE'].mean():.1f}", "m", "#ff00b4")
-        renderizar_tarjeta_kpi(c4, "Nivel Tanq.", f"{df[df['TagName']==info_p.get('nivel_tanque')]['VALUE'].mean():.1f}", "m", "#00d4ff")
-        
-        # --- GRÁFICO CON LEYENDA ARRIBA ---
-        fig = go.Figure()
-        
-        # Obtenemos los nombres de todas las columnas únicas presentes en el DataFrame
-        lista_tags_en_df = df['TagName'].unique()
-        
-        for tag in lista_tags_en_df:
-            df_t = df[df['TagName'] == tag]
-            if not df_t.empty:
-                fig.add_trace(go.Scatter(
-                    x=df_t['FECHA'], 
-                    y=df_t['VALUE'], 
-                    name=tag,  # Usa el nombre real del tag como leyenda
-                    mode='lines',
-                    line=dict(width=2)
-                ))
+        if not df.empty:
+            df['FECHA'] = pd.to_datetime(df['FECHA'])
+            eje_tiempo_global = sorted(df['FECHA'].unique())
+            df_interactivo = pd.DataFrame({'FECHA_INDEX': eje_tiempo_global})
+            
+            fig_line = go.Figure()
+            
+            for t in tags_grafico:
+                dft_l = df[df['TagName'] == t['tag']].sort_values('FECHA').copy()
+                if not dft_l.empty:
+                    # Traza principal
+                    fig_line.add_trace(go.Scatter(x=dft_l['FECHA'], y=dft_l['VALUE'], name=t['label'], mode='lines', 
+                                                 line=dict(color=t['color'], width=2.2), yaxis=t['axis'], showlegend=True))
+                    
+                    # Traza de hover para unificar datos
+                    df_tag_maestro = pd.merge_asof(df_interactivo, dft_l, left_on='FECHA_INDEX', right_on='FECHA', direction='backward').bfill()
+                    fig_line.add_trace(go.Scatter(x=df_interactivo['FECHA_INDEX'], y=df_tag_maestro['VALUE'], name=t['label'],
+                                                 mode='lines', line=dict(color=t['color'], width=0.01), yaxis=t['axis'], showlegend=False,
+                                                 hovertemplate=f"<span style='color:{t['color']};'>■</span> <b>{t['label']}</b>: %{{y:,.2f}}<extra></extra>"))
+
+            # --- LAYOUT FINAL ---
         
         # Ajuste de layout: Leyenda arriba y márgenes para que no se corte
-        fig.update_layout(
-            template="plotly_dark", 
-            hovermode="x unified", 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)',
-            legend=dict(
-                orientation="h",   # Leyenda horizontal
-                yanchor="bottom",
-                y=1.05,            # Posición arriba del gráfico
-                xanchor="center",
-                x=0.5
-            ),
-            margin=dict(t=100, b=0, l=0, r=0) # Margen superior amplio
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            fig_line.update_layout(
+                template="plotly_dark", height=650, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                hovermode="x unified",
+                legend=dict(orientation="h", y=1.08, xanchor="center", x=0.5),
+                xaxis=dict(domain=[0.07, 0.91]),
+                yaxis=dict(title="Caudal (Lps)", color="#00d4ff", position=0.07),
+                yaxis2=dict(title="Presión (Kg/cm²)", color="#00ff00", overlaying="y", side="right", position=0.92),
+                yaxis3=dict(title="Niveles (m)", color="#ff00b4", overlaying="y", side="right", position=0.955),
+                yaxis4=dict(title="Eléctricos (V/A)", color="#ff8000", overlaying="y", side="right", position=1.00),
+                yaxis5=dict(title="Tanque (m)", color="#00ffcc", overlaying="y", side="left", position=0.00)
+            )
+            st.plotly_chart(fig_line, use_container_width=True)
     else:
         st.warning("No hay registros en el rango.")
 
