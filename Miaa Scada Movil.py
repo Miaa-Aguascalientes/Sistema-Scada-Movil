@@ -498,7 +498,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
         if not tags_en_grupo: continue
         
-        st.subheader(f"📈 {grupo['titulo']}")
+        st.markdown(f'<h3 style="color: white;">📈 {grupo["titulo"]}</h3>', unsafe_allow_html=True)
         fig = go.Figure()
         
         for key, label, color in tags_en_grupo:
