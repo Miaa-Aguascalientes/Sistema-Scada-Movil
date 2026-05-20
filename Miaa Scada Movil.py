@@ -170,6 +170,18 @@ st.markdown("""
         flex: 0 0 calc(33% - 5px) !important;
         max-width: calc(33% - 5px) !important;
     }
+    /* Contenedor que mantiene los dos indicadores juntos */
+    .kpi-row {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px !important;
+        justify-content: flex-start !important;
+    }
+    /* Fuerza a que cada tarjeta sea delgada */
+    .kpi-row > div {
+        flex: 1 !important;
+        max-width: 150px !important;
+    }
     
 </style>
 """, unsafe_allow_html=True)
