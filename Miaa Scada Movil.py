@@ -434,38 +434,43 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
-# 1. Preparar tags para indicadores
+    # 1. Preparar tags para consulta
+    # (Tu lógica de fechas ya está definida arriba en el código original)
     tags_indicadores = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia']]
-    # Incluir voltajes y amperajes
-    tags_indicadores.extend([v for v in info_p['voltajes_l'] if v != 'N/A'])
-    tags_indicadores.extend([a for a in info_p['amperajes_l'] if a != 'N/A'])
+    tags_indicadores.extend([v for v in info_p['voltajes_l'] if v and v != 'N/A'])
+    tags_indicadores.extend([a for a in info_p['amperajes_l'] if a and a != 'N/A'])
     
-    # 2. Obtener datos actuales y promedios
-    # Nivel tanque actual (específico solicitado)
+    # 2. Ejecutar la consulta SQL primero para obtener 'df'
+    engine = get_mysql_scada_engine()
+    tags_str = "','".join(list(set([t for t in tags_indicadores if t])))
+    q = f"SELECT r.NAME as TagName, h.VALUE FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}'"
+    df = pd.read_sql(q, engine)
+    
+    # 3. Definir la función pasando el dataframe explícitamente
+    def get_avg(tag, dataframe):
+        d = dataframe[dataframe['TagName'] == tag]['VALUE']
+        return d.mean() if not d.empty else 0.0
+
+    # 4. Obtener dato actual (Nivel tanque)
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
     
-    # Cálculos de promedios para el resto
-    def get_avg(tag):
-        d = df[df['TagName'] == tag]['VALUE']
-        return d.mean() if not d.empty else 0.0
-
-    # 3. Renderizado de indicadores
-    # Fila 1
+    # 5. Renderizado de indicadores
     cols1 = st.columns(4)
-    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal']):,.2f}", "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion']):,.2f}", "Kg/cm²", "#00ff00")
+    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
     renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
-    renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico']):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
     
-    # Fila 2
     cols2 = st.columns(4)
-    renderizar_tarjeta_kpi(cols2[0], "Sumergencia", f"{get_avg(info_p['sumergencia']):,.2f}", "m", "#a800ff")
-    # Para voltajes y amperajes, tomamos el promedio de los disponibles
-    v_prom = sum([get_avg(v) for v in info_p['voltajes_l'] if v != 'N/A']) / len([v for v in info_p['voltajes_l'] if v != 'N/A']) if len([v for v in info_p['voltajes_l'] if v != 'N/A']) > 0 else 0
-    a_prom = sum([get_avg(a) for a in info_p['amperajes_l'] if a != 'N/A']) / len([a for a in info_p['amperajes_l'] if a != 'N/A']) if len([a for a in info_p['amperajes_l'] if a != 'N/A']) > 0 else 0
+    renderizar_tarjeta_kpi(cols2[0], "Sumergencia", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
     
+    v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
+    v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
     renderizar_tarjeta_kpi(cols2[1], "Voltaje Prom", f"{v_prom:,.1f}", "V", "#fffb00")
+    
+    a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
+    a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
     renderizar_tarjeta_kpi(cols2[2], "Amperaje Prom", f"{a_prom:,.1f}", "A", "#ff8000")
     
 # 1. Definición de opciones
