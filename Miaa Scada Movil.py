@@ -586,9 +586,18 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
             fig.update_layout(
                 template="plotly_dark",
                 height=300,
-                margin=dict(t=20, b=20, l=10, r=10),
+                margin=dict(t=40, b=20, l=10, r=10),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
+                hovermode="x unified",
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    y=1.2,
+                    x=0.5,
+                    xanchor="center",
+                    font=dict(size=10, color='white')
+                ),    
                 xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white'),
                 yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white')
             )
