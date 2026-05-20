@@ -603,11 +603,15 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     # 3. Consulta SQL ajustada con las nuevas variables
     try:
         engine = get_mysql_scada_engine()
+        # Convertimos las fechas a string con formato explícito para evitar errores de interpretación
+        f_ini_str = f_ini.strftime('%Y-%m-%d %H:%M:%S')
+        f_fin_str = f_fin.strftime('%Y-%m-%d %H:%M:%S') if isinstance(f_fin, datetime) else f_fin.strftime('%Y-%m-%d %H:%M:%S')
+        
         query = f"""
             SELECT h.FECHA, h.VALUE FROM vfitagnumhistory h
             JOIN VfiTagRef r ON h.GATEID = r.GATEID
             WHERE r.NAME = '{info_t['tag_nivel']}' 
-            AND h.FECHA BETWEEN '{f_ini}' AND '{f_fin}'
+            AND h.FECHA BETWEEN '{f_ini_str}' AND '{f_fin_str}'
             ORDER BY h.FECHA ASC
         """
         df_hist = pd.read_sql(query, engine)
