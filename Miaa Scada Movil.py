@@ -485,7 +485,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     # Fila 2: Niveles de pozo
     f2 = st.columns(2)
-    renderizar_tarjeta_kpi(f2[0], "Nivivel. Dinamico.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(f2[0], "Nivivel Dinamico.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "Mts", "#ff00b4")
     renderizar_tarjeta_kpi(f2[1], "Sumergencia de la bomba.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "Mts", "#a800ff")
     
     # Fila 3: Eléctricos
