@@ -20,7 +20,7 @@ st.set_page_config(
 if 'scada_refresh' not in st.session_state:
     st.session_state.scada_refresh = 0
 
-# 0. SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
+# 0. SECCION ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
 if 'autenticado' not in st.session_state:
     query_params = st.query_params
     if query_params.get("access") == "granted":
@@ -85,7 +85,7 @@ def verificar_credenciales(usuario_input, password_input):
         st.error(f"Error al consultar usuario: {e}")
         return None
 
-# ESTILO VISUAL HUD AJUSTADO PARA MÓVIL
+#1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
     .stApp { background-color: #050a10 !important; }
@@ -189,7 +189,7 @@ if not st.session_state.autenticado:
             st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# 2. FUNCIONES DE EXTRACCIÓN DE DATOS SCADA & POSTGRES -----------------------------------------------------------
+# 2. SECCION -----------------------------------------------   FUNCIONES DE EXTRACCIÓN DE DATOS SCADA & POSTGRES -----------------------------------------------------------
 def cargar_datos_scada(lista_tags):
     engine = get_mysql_scada_engine()
     if not engine or not lista_tags: return {}
@@ -226,7 +226,6 @@ def obtener_historia_7_dias(tag_name):
         return pd.DataFrame()
 
 # 2. Función de sectores corregida
-# 2. Definir la función de sectores usando el engine anterior
 @st.cache_data(ttl=3600)
 def cargar_sectores_poligonos():
     # Obtenemos una conexión fresca
@@ -357,7 +356,7 @@ def cargar_vrp_desde_db():
         return d_res
     except: return {}
 
-# 3. PROCESAMIENTO E INTERFAZ DE ACTIVOS -----------------------------------------------------------------------
+# 3. SECCION --------------------------------------------------------- PROCESAMIENTO E INTERFAZ DE ACTIVOS -----------------------------------------------------------------------
 sectores = cargar_sectores_poligonos()
 mapa_pozos_dict = cargar_mapa_pozos_desde_db()
 mapa_tanques_dict = cargar_tanques_desde_db()
@@ -419,7 +418,7 @@ with c2:
 
 st.divider()
 
-# --- 4. RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA ---
+# 4. SECCION ----------------------------------------- RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA -------------------------------------------------------------
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
         <div style="border: 2px solid {color}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
@@ -434,7 +433,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
-    # 1. Selector de fecha ÚNICO con key asignada para evitar el error de duplicado
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
     opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2, key="sel_rango_pozo")
     
@@ -450,7 +448,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt], key="date_pozo")
         f_ini = rango[0] if len(rango) == 2 else hoy_dt - timedelta(days=7)
 
-    # 2. Consulta de datos (Cargamos el df primero)
+  
     tags_consulta = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia'], info_p['nivel_tanque']]
     tags_consulta.extend([v for v in info_p['voltajes_l'] if v and v != 'N/A'])
     tags_consulta.extend([a for a in info_p['amperajes_l'] if a and a != 'N/A'])
@@ -460,7 +458,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     q = f"SELECT r.NAME as TagName, h.VALUE FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}'"
     df = pd.read_sql(q, engine)
     
-    # Función local para promedios pasando el df
     def get_avg(tag, df_loc):
         d = df_loc[df_loc['TagName'] == tag]['VALUE']
         return d.mean() if not d.empty else 0.0
@@ -470,22 +467,26 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
     
-    cols1 = st.columns(4)
-    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
-    renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+# Fila 1: 3 elementos principales
+    f1 = st.columns(3)
+    renderizar_tarjeta_kpi(f1[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    renderizar_tarjeta_kpi(f1[1], "Presión", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
+    renderizar_tarjeta_kpi(f1[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
     
-    cols2 = st.columns(4)
-    renderizar_tarjeta_kpi(cols2[0], "Sumergencia", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
+    # Fila 2: Niveles de pozo
+    f2 = st.columns(2)
+    renderizar_tarjeta_kpi(f2[0], "Niv. Din.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(f2[1], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
     
+    # Fila 3: Eléctricos
+    f3 = st.columns(2)
     v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
     v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
-    renderizar_tarjeta_kpi(cols2[1], "Voltaje Prom", f"{v_prom:,.1f}", "V", "#fffb00")
+    renderizar_tarjeta_kpi(f3[0], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
     
     a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
     a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
-    renderizar_tarjeta_kpi(cols2[2], "Amperaje Prom", f"{a_prom:,.1f}", "A", "#ff8000")
+    renderizar_tarjeta_kpi(f3[1], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
