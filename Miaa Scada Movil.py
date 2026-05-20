@@ -148,12 +148,12 @@ st.markdown("""
     .card-indicador {
     background: #0d1f2d;
     border: 1px solid #00d4ff;
-    padding: 8px; /* Reduje el padding de 10px a 8px */
+    padding: 2px; /* Reduje el padding de 10px a 8px */
     border-radius: 8px;
     text-align: center;
     margin-bottom: 8px;
     /* AGREGA ESTA LÍNEA PARA CONTROLAR EL ANCHO MÁXIMO */
-    max-width: 150px; 
+    max-width: 100px; 
     margin-left: auto;
     margin-right: auto;
 }
