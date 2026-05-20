@@ -570,14 +570,14 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
-    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=2)
+    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=0) # Index 0 para empezar en 'Hoy'
     
     hoy_dt = datetime.now()
-    f_fin = hoy_dt # Fecha final para la consulta
+    f_fin = hoy_dt
     
     # 2. Lógica extendida para calcular fechas
     if opcion_fecha == "Hoy":
-        f_ini = hoy_dt - timedelta(days=0)
+        f_ini = hoy_dt.replace(hour=0, minute=0, second=0, microsecond=0)
     elif opcion_fecha == "Ayer":
         f_ini = hoy_dt - timedelta(days=1)
     elif opcion_fecha == "Últimos 7 días":
