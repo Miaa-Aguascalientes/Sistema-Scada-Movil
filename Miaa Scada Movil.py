@@ -501,7 +501,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
 
     cols1 = st.columns(4)
-    renderizar_tarjeta_kpi(cols1(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff"):
+    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff"):
     renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
     renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
     renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
