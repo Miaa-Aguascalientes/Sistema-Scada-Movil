@@ -485,6 +485,13 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     cols1 = st.columns(4)
     renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    col.markdown(f'''
+        <div style="border: 2px solid {color}; padding: 5px; border-radius: 8px; text-align: center; margin: auto; background: rgba(0,0,0,0.2); max-width: 120px;">
+            <p style="color: #ccc; font-size: 8px; margin: 0; text-transform: uppercase; font-weight: bold;">{titulo}</p>
+            <p style="color: {color}; font-size: 14px; font-weight: bold; margin: 0;">{valor} <span style="font-size: 8px; color: white;">{unidad}</span></p>
+        </div>
+    ''', unsafe_allow_html=True)
+    
     renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
     renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
     renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
