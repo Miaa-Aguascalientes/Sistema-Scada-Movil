@@ -474,7 +474,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     # Iteramos para colocar 2 indicadores por cada columna (3x2 = 6 indicadores)
     for i, (titulo, valor, unidad, color) in enumerate(indicadores):
-        col = cols[i % 3]
+        col = cols[i % 6]
         col.markdown(f'''
             <div style="
                 border: 1px solid {color}; 
