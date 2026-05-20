@@ -435,7 +435,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
 # --- CÁLCULO DE PROMEDIOS ---
-# --- CÁLCULO DE PROMEDIOS (SEGURO) ---
     def limpiar_y_convertir(lista_valores):
         numeros = []
         for v in lista_valores:
@@ -463,15 +462,34 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     nivel_tq, _ = data_scada.get(info_p.get('nivel_tanque'), ('0.00', ''))
 
-    # --- RENDERIZADO DE INDICADORES (Fila completa) ---
-    cols = st.columns(6) # Usamos 6 columnas para que quepan todos los indicadores
+# Usamos 3 columnas para que los indicadores no queden "apretados" pero ocupen poco espacio vertical
+    cols = st.columns(3)
     
-    renderizar_tarjeta_kpi(cols[0], "Caudal", data_scada.get(info_p.get('caudal'), ('0.00', ''))[0], "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(cols[1], "Presión", data_scada.get(info_p.get('presion'), ('0.00', ''))[0], "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(cols[2], "Nivel Tanque", nivel_tq, "m", "#00ffcc")
-    renderizar_tarjeta_kpi(cols[3], "Dinámico", data_scada.get(info_p.get('nivel_dinamico'), ('0.00', ''))[0], "m", "#ff00b4")
-    renderizar_tarjeta_kpi(cols[4], "Voltaje Prom", f"{prom_v:.1f}", "V", "#fffb00")
-    renderizar_tarjeta_kpi(cols[5], "Amperaje Prom", f"{prom_a:.1f}", "A", "#ff8000")    
+    # Lista de indicadores con sus configuraciones
+    indicadores = [
+        ("Caudal", f"{data_scada.get(info_p.get('caudal'), ('0.00', ''))[0]}", "Lps", "#00d4ff"),
+        ("Presión", f"{data_scada.get(info_p.get('presion'), ('0.00', ''))[0]}", "Kg", "#00ff00"),
+        ("Nivel Tq", f"{nivel_tq}", "m", "#00ffcc"),
+        ("Dinámico", f"{data_scada.get(info_p.get('nivel_dinamico'), ('0.00', ''))[0]}", "m", "#ff00b4"),
+        ("Voltaje", f"{prom_v:.0f}", "V", "#fffb00"),
+        ("Amperaje", f"{prom_a:.0f}", "A", "#ff8000")
+    ]
+    
+    # Iteramos para colocar 2 indicadores por cada columna (3x2 = 6 indicadores)
+    for i, (titulo, valor, unidad, color) in enumerate(indicadores):
+        col = cols[i % 3]
+        col.markdown(f'''
+            <div style="
+                border: 1px solid {color}; 
+                padding: 5px; 
+                border-radius: 6px; 
+                text-align: center; 
+                margin-bottom: 5px; 
+                background: rgba(255,255,255,0.03);">
+                <p style="color: #aaa; font-size: 8px; margin: 0; text-transform: uppercase;">{titulo}</p>
+                <p style="color: {color}; font-size: 13px; font-weight: bold; margin: 0;">{valor} <span style="font-size: 9px; color: white;">{unidad}</span></p>
+            </div>
+        ''', unsafe_allow_html=True)  
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
