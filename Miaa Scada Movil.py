@@ -153,18 +153,7 @@ st.markdown("""
     }
     
 
-    /* Contenedor que mantiene los dos indicadores juntos */
-    .kpi-row {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 10px !important;
-        justify-content: flex-start !important;
-    }
-    /* Fuerza a que cada tarjeta sea delgada */
-    .kpi-row > div {
-        flex: 1 !important;
-        max-width: 150px !important;
-    }
+
     
 </style>
 """, unsafe_allow_html=True)
@@ -492,22 +481,22 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     f1 = st.columns(3)
     renderizar_tarjeta_kpi(f1[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
     renderizar_tarjeta_kpi(f1[1], "Presión", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(f1[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
+    renderizar_tarjeta_kpi(f1[2], "Nivel de tanque actual", f"{val_nivel_tq:,.2f}", "Mts", "#00ffcc")
     
     # Fila 2: Niveles de pozo
     f2 = st.columns(2)
-    renderizar_tarjeta_kpi(f2[0], "Niv. Din.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
-    renderizar_tarjeta_kpi(f2[1], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
+    renderizar_tarjeta_kpi(f2[0], "Nivivel. Dinamico.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(f2[1], "Sumergencia de la bomba.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "Mts", "#a800ff")
     
     # Fila 3: Eléctricos
     f3 = st.columns(2)
     v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
     v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
-    renderizar_tarjeta_kpi(f3[0], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
+    renderizar_tarjeta_kpi(f3[0], "Voltaje", f"{v_prom:,.1f}", "Volt", "#fffb00")
     
     a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
     a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
-    renderizar_tarjeta_kpi(f3[1], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
+    renderizar_tarjeta_kpi(f3[1], "Amperaje", f"{a_prom:,.1f}", "Amp", "#ff8000")
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
