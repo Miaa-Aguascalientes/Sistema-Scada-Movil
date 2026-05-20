@@ -442,21 +442,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     info_p = mapa_pozos_dict.get(id_pozo)
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
-
-
-    
-    hoy_dt = datetime.now()
-    if opcion_fecha == "Hoy": f_ini = hoy_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-    elif opcion_fecha == "Ayer": f_ini = hoy_dt - timedelta(days=1)
-    elif opcion_fecha == "Últimos 7 días": f_ini = hoy_dt - timedelta(days=7)
-    elif opcion_fecha == "Últimos 14 días": f_ini = hoy_dt - timedelta(days=14)
-    elif opcion_fecha == "Este Mes": f_ini = hoy_dt.replace(day=1)
-    elif opcion_fecha == "Último Mes": f_ini = (hoy_dt.replace(day=1) - timedelta(days=1)).replace(day=1)
-    elif opcion_fecha == "Últimos 6 meses": f_ini = hoy_dt - timedelta(days=180)
-    else: 
-        rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt], key="date_pozo")
-        f_ini = rango[0] if len(rango) == 2 else hoy_dt - timedelta(days=7)
-
   
     tags_consulta = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia'], info_p['nivel_tanque']]
     tags_consulta.extend([v for v in info_p['voltajes_l'] if v and v != 'N/A'])
