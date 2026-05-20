@@ -433,60 +433,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     info_p = mapa_pozos_dict.get(id_pozo)
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
-
-# --- CÁLCULO DE PROMEDIOS (SEGURO) ---
-    def limpiar_y_convertir(lista_valores):
-        numeros = []
-        for v in lista_valores:
-            if v is None: continue
-            # Convertimos a string y quitamos espacios
-            v_str = str(v).strip()
-            # Filtramos los que no son numéricos
-            if v_str and v_str.lower() != 'n/a' and v_str != '':
-                try:
-                    numeros.append(float(v_str))
-                except ValueError:
-                    continue # Ignora valores corruptos
-        return numeros
-
-    voltajes = limpiar_y_convertir(info_p.get('voltajes_l', []))
-    amperajes = limpiar_y_convertir(info_p.get('amperajes_l', []))
-    
-    prom_v = sum(voltajes) / len(voltajes) if voltajes else 0.0
-    prom_a = sum(amperajes) / len(amperajes) if amperajes else 0.0
-    
-# --- OBTENCIÓN DE NIVEL TANQUE ---
-    data_scada = cargar_datos_scada([info_p.get('caudal'), info_p.get('presion'), 
-                                      info_p.get('nivel_tanque'), info_p.get('nivel_dinamico'), 
-                                      info_p.get('sumergencia')])
-    
-    nivel_tq, _ = data_scada.get(info_p.get('nivel_tanque'), ('0.00', ''))
-
-    # --- RENDERIZADO DE INDICADORES (Fila completa) ---
-    cols = st.columns(6) # Usamos 6 columnas para que quepan todos los indicadores
-    
-    renderizar_tarjeta_kpi(cols[0], "Caudal", data_scada.get(info_p.get('caudal'), ('0.00', ''))[0], "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(cols[1], "Presión", data_scada.get(info_p.get('presion'), ('0.00', ''))[0], "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(cols[2], "Nivel Tanque", nivel_tq, "m", "#00ffcc")
-    renderizar_tarjeta_kpi(cols[3], "Dinámico", data_scada.get(info_p.get('nivel_dinamico'), ('0.00', ''))[0], "m", "#ff00b4")
-    renderizar_tarjeta_kpi(cols[4], "Voltaje Prom", f"{prom_v:.1f}", "V", "#fffb00")
-    renderizar_tarjeta_kpi(cols[5], "Amperaje Prom", f"{prom_a:.1f}", "A", "#ff8000")
-    
-    # Iteramos para colocar 2 indicadores por cada columna (3x2 = 6 indicadores)
-    for i, (titulo, valor, unidad, color) in enumerate(indicadores):
-        col = cols[i % 6]
-        col.markdown(f'''
-            <div style="
-                border: 1px solid {color}; 
-                padding: 5px; 
-                border-radius: 6px; 
-                text-align: center; 
-                margin-bottom: 5px; 
-                background: rgba(255,255,255,0.03);">
-                <p style="color: #aaa; font-size: 8px; margin: 0; text-transform: uppercase;">{titulo}</p>
-                <p style="color: {color}; font-size: 13px; font-weight: bold; margin: 0;">{valor} <span style="font-size: 9px; color: white;">{unidad}</span></p>
-            </div>
-        ''', unsafe_allow_html=True)  
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
