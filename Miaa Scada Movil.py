@@ -568,9 +568,34 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
         </div>
     ''', unsafe_allow_html=True)
     
-    opcion_fecha = st.selectbox("Selecciona rango:", ["Hoy", "Esta Semana", "Últimos 14 días"])
-    hoy = datetime.now().date()
-    f_ini = hoy if opcion_fecha == "Hoy" else (hoy - timedelta(days=7) if opcion_fecha == "Esta Semana" else hoy - timedelta(days=14))
+# 1. Definición de opciones
+    opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
+    opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2) # Index 2 es "Últimos 7 días"
+    
+    hoy_dt = datetime.now()
+    
+    # 2. Lógica extendida para calcular fechas
+    if opcion_fecha == "Hoy":
+        f_ini = hoy_dt - timedelta(days=0)
+    elif opcion_fecha == "Ayer":
+        f_ini = hoy_dt - timedelta(days=1)
+    elif opcion_fecha == "Últimos 7 días":
+        f_ini = hoy_dt - timedelta(days=7)
+    elif opcion_fecha == "Últimos 14 días":
+        f_ini = hoy_dt - timedelta(days=14)
+    elif opcion_fecha == "Este Mes":
+        f_ini = hoy_dt.replace(day=1)
+    elif opcion_fecha == "Último Mes":
+        f_ini = (hoy_dt.replace(day=1) - timedelta(days=1)).replace(day=1)
+    elif opcion_fecha == "Últimos 6 meses":
+        f_ini = hoy_dt - timedelta(days=180)
+    elif opcion_fecha == "Personalizado":
+        rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt])
+        if len(rango) == 2:
+            f_ini, f_fin_sel = rango
+        else:
+            f_ini = hoy_dt - timedelta(days=7)
+    # Configuración de Ejes y Colores (Orden Fijo)
     
     try:
         engine = get_mysql_scada_engine()
