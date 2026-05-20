@@ -434,7 +434,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
-# --- CÁLCULO DE PROMEDIOS ---
+# --- CÁLCULO DE PROMEDIOS (SEGURO) ---
     def limpiar_y_convertir(lista_valores):
         numeros = []
         for v in lista_valores:
