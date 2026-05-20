@@ -411,10 +411,10 @@ st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🎛
 c1, c2 = st.columns(2)
 with c1:
     st.selectbox("💧 Pozos", ["-- Seleccionar --"] + sorted(list(mapa_pozos_dict.keys())), key="opt_pozo", on_change=reset_pozo)
-    st.selectbox("🧊 Rebombeos", ["-- Seleccionar --"] + sorted(list(mapa_rebombeos_dict.keys())), key="opt_rebombeo", on_change=reset_rebombeo)
+    st.selectbox("🛢️  Tanques", ["-- Seleccionar --"] + sorted(list(mapa_tanques_dict.keys())), key="opt_tanque", on_change=reset_tanque)
 
 with c2:
-    st.selectbox("🛢️  Tanques", ["-- Seleccionar --"] + sorted(list(mapa_tanques_dict.keys())), key="opt_tanque", on_change=reset_tanque)
+    st.selectbox("🧊 Rebombeos", ["-- Seleccionar --"] + sorted(list(mapa_rebombeos_dict.keys())), key="opt_rebombeo", on_change=reset_rebombeo)
     st.selectbox("🏘️ Sectores Hidráulicos", ["-- Seleccionar --"] + sorted([s['sector'] for s in sectores if s.get('sector')]), key="opt_sector", on_change=reset_sector)
 
 st.divider()
