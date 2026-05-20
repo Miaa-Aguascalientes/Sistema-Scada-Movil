@@ -484,7 +484,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
     
     cols1 = st.columns(4)
-    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+def renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff"):
     col.markdown(f'''
         <div style="border: 2px solid {color}; padding: 5px; border-radius: 8px; text-align: center; margin: auto; background: rgba(0,0,0,0.2); max-width: 120px;">
             <p style="color: #ccc; font-size: 8px; margin: 0; text-transform: uppercase; font-weight: bold;">{titulo}</p>
