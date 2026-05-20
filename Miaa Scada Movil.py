@@ -157,6 +157,19 @@ st.markdown("""
         flex-direction: row !important;
         flex-wrap: nowrap !important;
     }
+    /* El contenedor 'kpi-pozo' fuerza la disposición horizontal */
+    .kpi-pozo-container {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 5px !important;
+    }
+    /* Las columnas dentro de este contenedor serán delgadas */
+    .kpi-pozo-container [data-testid="column"] {
+        flex: 0 0 calc(33% - 5px) !important;
+        max-width: calc(33% - 5px) !important;
+    }
     
 </style>
 """, unsafe_allow_html=True)
