@@ -203,7 +203,7 @@ def cargar_datos_scada(lista_tags):
             AND h.FECHA = (SELECT MAX(FECHA) FROM VfiTagNumHistory_Ultimo WHERE GATEID = h.GATEID)
         """
         df = pd.read_sql(query, engine)
-        return {row['NAME']: (row['VALUE'], row['FECHA'].strftime('%d/%m %H:%M') if row['FECHA'] else "N/A") for _, row in df.iterrows()}
+        return {row['NAME']: (row['VALUE'], row['FECHA'].strftime('%d/%m/%Y %H:%M') if row['FECHA'] else "N/A") for _, row in df.iterrows()}
     except:
         return {}
 
