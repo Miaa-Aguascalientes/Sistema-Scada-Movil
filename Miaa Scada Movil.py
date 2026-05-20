@@ -85,7 +85,7 @@ def verificar_credenciales(usuario_input, password_input):
         st.error(f"Error al consultar usuario: {e}")
         return None
 
-# ESTILO VISUAL HUD AJUSTADO PARA MÓVIL
+# --------------------------------------------------------------------  ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ------------------------------------------------------------------
 st.markdown("""
 <style>
     .stApp { background-color: #050a10 !important; }
@@ -144,6 +144,19 @@ st.markdown("""
         display: block;
         margin: 0 auto 20px auto; /* Centrado y con margen inferior */
     }
+
+    .card-indicador {
+    background: #0d1f2d;
+    border: 1px solid #00d4ff;
+    padding: 8px; /* Reduje el padding de 10px a 8px */
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 8px;
+    /* AGREGA ESTA LÍNEA PARA CONTROLAR EL ANCHO MÁXIMO */
+    max-width: 150px; 
+    margin-left: auto;
+    margin-right: auto;
+}
     
 </style>
 """, unsafe_allow_html=True)
@@ -470,7 +483,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
     
-    cols1 = st.columns(4)
+    cols1 = st.columns(5)
     renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
     renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
     renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
