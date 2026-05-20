@@ -562,9 +562,9 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     # Renderizar el indicador visual igual al de tu imagen
     st.markdown(f'''
         <div style="border: 2px solid #00d4ff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; background: rgba(0, 212, 255, 0.05);">
-            <p style="color: #888; font-size: 12px; margin: 0; font-weight: bold;">NIVEL TANQUE</p>
-            <p style="color: white; font-size: 32px; font-weight: bold; margin: 0;">{float(ultimo_nivel):,.2f} <span style="font-size: 18px; color: #00d4ff;">m</span></p>
-            <p style="color: #444; font-size: 10px; margin: 0;">Última lectura: {fecha_lectura}</p>
+            <p style="color: white; font-size: 12px; margin: 0; font-weight: bold;">Nivel de tanque actual</p>
+            <p style="color: white; font-size: 32px; font-weight: bold; margin: 0;">{float(ultimo_nivel):,.2f} <span style="font-size: 18px; color: #00d4ff;">Mts</span></p>
+            <p style="color: white; font-size: 10px; margin: 0;">Última lectura: {fecha_lectura}</p>
         </div>
     ''', unsafe_allow_html=True)
     
