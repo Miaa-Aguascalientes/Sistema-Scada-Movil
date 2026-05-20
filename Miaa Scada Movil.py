@@ -576,6 +576,7 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
             fig.add_trace(go.Scatter(
                 x=df_hist['FECHA'],
                 y=df_hist['VALUE'],
+                name="Nivel Tq",
                 mode='lines+markers', # Cambio realizado: líneas y puntos
                 line=dict(color='#00ffcc', width=2),
                 fill='tozeroy',
