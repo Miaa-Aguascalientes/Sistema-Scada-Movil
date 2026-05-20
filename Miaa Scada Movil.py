@@ -463,7 +463,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     nivel_tq, _ = data_scada.get(info_p.get('nivel_tanque'), ('0.00', ''))
 
 # Usamos 3 columnas para que los indicadores no queden "apretados" pero ocupen poco espacio vertical
-    cols = st.columns(3)
+    cols = st.columns(2)
     
     # Lista de indicadores con sus configuraciones
     indicadores = [
