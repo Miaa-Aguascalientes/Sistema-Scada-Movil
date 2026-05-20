@@ -574,16 +574,31 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
             
             fig = go.Figure()
             fig.add_trace(go.Scatter(
-                x=df_hist['FECHA'], y=df_hist['VALUE'], mode='lines',
-                line=dict(color='#00d4ff', width=2.5), fill='tozeroy',
-                fillcolor='rgba(0, 212, 255, 0.15)', hovertemplate="<b>%{y:.2f} m</b><extra></extra>"
+                x=df_hist['FECHA'],
+                y=df_hist['VALUE'],
+                mode='lines+markers', # Cambio realizado: líneas y puntos
+                line=dict(color='#00ffcc', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(0, 255, 204, 0.1)',
+                hovertemplate="<b>Nivel</b>: %{y:.2f} m<extra></extra>"
             ))
-            fig.update_layout(template="plotly_dark", xaxis_title="Fecha", yaxis_title="Nivel (m)", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            
+            fig.update_layout(
+                template="plotly_dark",
+                height=300,
+                margin=dict(t=20, b=20, l=10, r=10),
+                paper_bgcolor='rgba(0,0,0,0)', 
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white')
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Sin datos para este tanque en el periodo elegido.")
     except Exception as e:
         st.error(f"Error cargando tanque: {e}")
+
+# ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
 
 elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id != "-- Seleccionar --":
     id_rb = st.session_state.activo_id
@@ -609,6 +624,8 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
         fig_rb = go.Figure(go.Scatter(x=df_p_rb['FECHA'], y=df_p_rb['VALUE'], mode='lines', line=dict(color='#00ff00', width=2)))
         fig_rb.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_rb, use_container_width=True)
+
+# ------------------------------------------------------------------------------ seccion de sectores ------------------------------------------------------------------------
 
 elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != "-- Seleccionar --":
     sec_id = st.session_state.activo_id
