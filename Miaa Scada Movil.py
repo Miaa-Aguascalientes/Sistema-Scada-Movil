@@ -434,9 +434,9 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
-    # 1. CALCULAR FECHAS PRIMERO (Para evitar el NameError)
+    # 1. Selector de fecha ÚNICO con key asignada para evitar el error de duplicado
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
-    opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2) 
+    opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2, key="sel_rango_pozo")
     
     hoy_dt = datetime.now()
     if opcion_fecha == "Hoy": f_ini = hoy_dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -447,32 +447,29 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     elif opcion_fecha == "Último Mes": f_ini = (hoy_dt.replace(day=1) - timedelta(days=1)).replace(day=1)
     elif opcion_fecha == "Últimos 6 meses": f_ini = hoy_dt - timedelta(days=180)
     else: 
-        rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt])
+        rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt], key="date_pozo")
         f_ini = rango[0] if len(rango) == 2 else hoy_dt - timedelta(days=7)
 
-    # 2. PREPARAR TAGS Y CONSULTAR
-    # Definimos los tags necesarios incluyendo el Nivel Tanque para el valor actual
-    tags_consulta = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia']]
+    # 2. Consulta de datos (Cargamos el df primero)
+    tags_consulta = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia'], info_p['nivel_tanque']]
     tags_consulta.extend([v for v in info_p['voltajes_l'] if v and v != 'N/A'])
     tags_consulta.extend([a for a in info_p['amperajes_l'] if a and a != 'N/A'])
     
     engine = get_mysql_scada_engine()
     tags_str = "','".join(list(set([t for t in tags_consulta if t])))
-    
-    # Ahora 'f_ini' y 'hoy_dt' ya existen, no dará error
     q = f"SELECT r.NAME as TagName, h.VALUE FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}'"
     df = pd.read_sql(q, engine)
-
-    # 3. FUNCIÓN DE PROMEDIO (Ahora recibe el df existente)
-    def get_avg(tag, dataframe):
-        d = dataframe[dataframe['TagName'] == tag]['VALUE']
+    
+    # Función local para promedios pasando el df
+    def get_avg(tag, df_loc):
+        d = df_loc[df_loc['TagName'] == tag]['VALUE']
         return d.mean() if not d.empty else 0.0
 
-    # 4. VALOR ACTUAL (Nivel Tanque)
+    # 3. Renderizado de KPIs
+    # Obtenemos el último nivel del tanque por separado como pediste
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
-    # 5. RENDERIZADO (Usando la estructura de tu imagen)
+    
     cols1 = st.columns(4)
     renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
     renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
