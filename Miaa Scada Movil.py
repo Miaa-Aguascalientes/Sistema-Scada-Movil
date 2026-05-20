@@ -85,7 +85,7 @@ def verificar_credenciales(usuario_input, password_input):
         st.error(f"Error al consultar usuario: {e}")
         return None
 
-# --------------------------------------------------------------------  ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ------------------------------------------------------------------
+# ESTILO VISUAL HUD AJUSTADO PARA MÓVIL
 st.markdown("""
 <style>
     .stApp { background-color: #050a10 !important; }
@@ -143,28 +143,6 @@ st.markdown("""
         height: auto;
         display: block;
         margin: 0 auto 20px auto; /* Centrado y con margen inferior */
-    }
-
-    /* Forzar que el contenedor de las columnas de Streamlit no se envuelva */
-    div[data-testid="column"] {
-        flex: 1 !important;
-        min-width: 40px !important; /* Ajusta este valor si los elementos se enciman mucho */
-    }
-    
-    /* Asegurar que el contenedor padre de las columnas sea flex y horizontal */
-    div[data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 2px !important; /* Espacio mínimo entre tus 7 indicadores */
-    }
-
-    /* Reducción extrema para que quepan 7 en una pantalla pequeña */
-    .card-indicador {
-        padding: 4px !important;
-        font-size: 8px !important;
-    }
-    .value-indicador {
-        font-size: 10px !important;
     }
     
 </style>
@@ -487,49 +465,27 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         d = df_loc[df_loc['TagName'] == tag]['VALUE']
         return d.mean() if not d.empty else 0.0
 
-
-# 1. Definición de la función (Asegúrate de que esté arriba en tu archivo)
-    def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
-        col.markdown(f'''
-            <div style="
-                border: 2px solid {color}; 
-                padding: 5px; 
-                border-radius: 8px; 
-                text-align: center; 
-                margin: auto; 
-                background: rgba(0,0,0,0.2); 
-                max-width: 90px; 
-                min-width: 80px;">
-                <p style="color: #ccc; font-size: 8px; margin: 0; text-transform: uppercase; font-weight: bold;">{titulo}</p>
-                <p style="color: {color}; font-size: 13px; font-weight: bold; margin: 0;">{valor} <span style="font-size: 7px; color: white;">{unidad}</span></p>
-            </div>
-        ''', unsafe_allow_html=True)
-        
-# Usamos 7 columnas (una por cada indicador)
-   
+    # 3. Renderizado de KPIs
+    # Obtenemos el último nivel del tanque por separado como pediste
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
-    # 2. Renderizado en cuadrícula de 3x3 (para que quepa todo sin romperse)
-    # Creamos las filas de columnas
-    fila1 = st.columns(3)
-    fila2 = st.columns(3)
-    fila3 = st.columns(3)
-
-    renderizar_tarjeta_kpi(fila1[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(fila1[1], "Presión", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(fila1[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
-
-    renderizar_tarjeta_kpi(fila2[0], "Niv. Din.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
-    renderizar_tarjeta_kpi(fila2[1], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
+    
+    cols1 = st.columns(4)
+    renderizar_tarjeta_kpi(cols1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    renderizar_tarjeta_kpi(cols1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
+    renderizar_tarjeta_kpi(cols1[2], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
+    renderizar_tarjeta_kpi(cols1[3], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    
+    cols2 = st.columns(4)
+    renderizar_tarjeta_kpi(cols2[0], "Sumergencia", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
     
     v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
     v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
-    renderizar_tarjeta_kpi(fila2[2], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
-
+    renderizar_tarjeta_kpi(cols2[1], "Voltaje Prom", f"{v_prom:,.1f}", "V", "#fffb00")
+    
     a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
     a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
-    renderizar_tarjeta_kpi(fila3[0], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
+    renderizar_tarjeta_kpi(cols2[2], "Amperaje Prom", f"{a_prom:,.1f}", "A", "#ff8000")
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
