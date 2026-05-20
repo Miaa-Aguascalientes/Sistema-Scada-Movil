@@ -495,33 +495,24 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
                 <p style="color: {color}; font-size: 13px; font-weight: bold; margin: 0;">{valor} <span style="font-size: 7px; color: white;">{unidad}</span></p>
             </div>
         ''', unsafe_allow_html=True)
-    # 3. Renderizado de KPIs
-    # Obtenemos el último nivel del tanque por separado como pediste
-    data_tq = cargar_datos_scada([info_p['nivel_tanque']])
-    val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
-# Usamos 2 columnas para que los indicadores tengan buen tamaño y no se amontonen
-    # Esto garantiza que siempre se vean bien en cualquier celular
-    fila1 = st.columns(2)
-    renderizar_tarjeta_kpi(fila1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(fila1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
+        
+# Usamos 7 columnas (una por cada indicador)
+    cols = st.columns(7)
     
-    fila2 = st.columns(2)
-    renderizar_tarjeta_kpi(fila2[0], "Nivel Tanque", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
-    renderizar_tarjeta_kpi(fila2[1], "Niv. Dinámico", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(cols[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    renderizar_tarjeta_kpi(cols[1], "Presión", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
+    renderizar_tarjeta_kpi(cols[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
+    renderizar_tarjeta_kpi(cols[3], "Niv. Din.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(cols[4], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
     
-    fila3 = st.columns(2)
-    renderizar_tarjeta_kpi(fila3[0], "Sumergencia", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
-    
+    # Cálculos para voltajes y amperajes
     v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
     v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
-    renderizar_tarjeta_kpi(fila3[1], "Voltaje Prom", f"{v_prom:,.1f}", "V", "#fffb00")
+    renderizar_tarjeta_kpi(cols[5], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
     
-    # Amperaje lo ponemos solo o en una fila separada para cerrar bien
-    fila4 = st.columns(1)
     a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
     a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
-    renderizar_tarjeta_kpi(fila4[0], "Amperaje Prom", f"{a_prom:,.1f}", "A", "#ff8000")
+    renderizar_tarjeta_kpi(cols[6], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
