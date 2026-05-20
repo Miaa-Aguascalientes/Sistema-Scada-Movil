@@ -435,8 +435,23 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
 # --- CÁLCULO DE PROMEDIOS ---
-    voltajes = [float(v) for v in info_p.get('voltajes_l', []) if v and v != 'N/A']
-    amperajes = [float(a) for a in info_p.get('amperajes_l', []) if a and a != 'N/A']
+# --- CÁLCULO DE PROMEDIOS (SEGURO) ---
+    def limpiar_y_convertir(lista_valores):
+        numeros = []
+        for v in lista_valores:
+            if v is None: continue
+            # Convertimos a string y quitamos espacios
+            v_str = str(v).strip()
+            # Filtramos los que no son numéricos
+            if v_str and v_str.lower() != 'n/a' and v_str != '':
+                try:
+                    numeros.append(float(v_str))
+                except ValueError:
+                    continue # Ignora valores corruptos
+        return numeros
+
+    voltajes = limpiar_y_convertir(info_p.get('voltajes_l', []))
+    amperajes = limpiar_y_convertir(info_p.get('amperajes_l', []))
     
     prom_v = sum(voltajes) / len(voltajes) if voltajes else 0.0
     prom_a = sum(amperajes) / len(amperajes) if amperajes else 0.0
