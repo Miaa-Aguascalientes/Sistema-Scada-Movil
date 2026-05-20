@@ -497,6 +497,9 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         ''', unsafe_allow_html=True)
         
 # Usamos 7 columnas (una por cada indicador)
+    data_tq = cargar_datos_scada([info_p['nivel_tanque']])
+    val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
+
     cols = st.columns(7)
     
     renderizar_tarjeta_kpi(cols[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
