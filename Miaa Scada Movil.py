@@ -144,6 +144,20 @@ st.markdown("""
         display: block;
         margin: 0 auto 20px auto; /* Centrado y con margen inferior */
     }
+
+    /* Forzar que las columnas no se apilen verticalmente */
+    [data-testid="column"] {
+        width: calc(33.33% - 1rem) !important;
+        flex: 1 1 calc(33.33% - 1rem) !important;
+        min-width: 80px !important;
+    }
+    
+    /* Evitar que el contenedor principal fuerce el apilamiento */
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+    }
     
 </style>
 """, unsafe_allow_html=True)
