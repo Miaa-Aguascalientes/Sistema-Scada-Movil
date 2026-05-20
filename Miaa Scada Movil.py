@@ -153,7 +153,7 @@ st.markdown("""
     text-align: center;
     margin-bottom: 8px;
     /* AGREGA ESTA LÍNEA PARA CONTROLAR EL ANCHO MÁXIMO */
-    max-width: 100px; 
+    max-width: 10px; 
     margin-left: auto;
     margin-right: auto;
 }
