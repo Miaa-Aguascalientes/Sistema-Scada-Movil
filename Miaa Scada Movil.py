@@ -442,7 +442,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
     # 2. Lógica extendida para calcular fechas
     if opcion_fecha == "Hoy":
-        f_ini = hoy_dt - timedelta(days=0)
+        f_ini = hoy_dt.replace(hour=0, minute=0, second=0, microsecond=0)
     elif opcion_fecha == "Ayer":
         f_ini = hoy_dt - timedelta(days=1)
     elif opcion_fecha == "Últimos 7 días":
