@@ -145,18 +145,27 @@ st.markdown("""
         margin: 0 auto 20px auto; /* Centrado y con margen inferior */
     }
 
+    /* Forzar que el contenedor de las columnas de Streamlit no se envuelva */
+    div[data-testid="column"] {
+        flex: 1 !important;
+        min-width: 40px !important; /* Ajusta este valor si los elementos se enciman mucho */
+    }
+    
+    /* Asegurar que el contenedor padre de las columnas sea flex y horizontal */
+    div[data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 2px !important; /* Espacio mínimo entre tus 7 indicadores */
+    }
+
+    /* Reducción extrema para que quepan 7 en una pantalla pequeña */
     .card-indicador {
-    background: #0d1f2d;
-    border: 1px solid #00d4ff;
-    padding: 2px; /* Reduje el padding de 10px a 8px */
-    border-radius: 8px;
-    text-align: center;
-    margin-bottom: 8px;
-    /* AGREGA ESTA LÍNEA PARA CONTROLAR EL ANCHO MÁXIMO */
-    max-width: 10px; 
-    margin-left: auto;
-    margin-right: auto;
-}
+        padding: 4px !important;
+        font-size: 8px !important;
+    }
+    .value-indicador {
+        font-size: 10px !important;
+    }
     
 </style>
 """, unsafe_allow_html=True)
@@ -499,23 +508,27 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
 # Usamos 7 columnas (una por cada indicador)
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
-    cols = st.columns(7)
     
-    renderizar_tarjeta_kpi(cols[0], "Caudal", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
-    renderizar_tarjeta_kpi(cols[1], "Presión", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
-    renderizar_tarjeta_kpi(cols[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
-    renderizar_tarjeta_kpi(cols[3], "Niv. Din.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
-    renderizar_tarjeta_kpi(cols[4], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
+# Fila 1: Los 3 más importantes (Caudal, Presión, Nivel Tanque)
+    cols_f1 = st.columns(3)
+    renderizar_tarjeta_kpi(cols_f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
+    renderizar_tarjeta_kpi(cols_f1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
+    renderizar_tarjeta_kpi(cols_f1[2], "Nivel Tq", f"{val_nivel_tq:,.2f}", "m", "#00ffcc")
     
-    # Cálculos para voltajes y amperajes
+    # Fila 2: Niveles de Pozo (Dinámico, Sumergencia)
+    cols_f2 = st.columns(2)
+    renderizar_tarjeta_kpi(cols_f2[0], "Niv. Dinám.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "m", "#ff00b4")
+    renderizar_tarjeta_kpi(cols_f2[1], "Sumerg.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "m", "#a800ff")
+    
+    # Fila 3: Eléctricos (Voltaje, Amperaje)
+    cols_f3 = st.columns(2)
     v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
     v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
-    renderizar_tarjeta_kpi(cols[5], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
+    renderizar_tarjeta_kpi(cols_f3[0], "Voltaje", f"{v_prom:,.1f}", "V", "#fffb00")
     
     a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
     a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
-    renderizar_tarjeta_kpi(cols[6], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
+    renderizar_tarjeta_kpi(cols_f3[1], "Amperaje", f"{a_prom:,.1f}", "A", "#ff8000")
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
