@@ -185,11 +185,11 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* Aumentar tamaño y asegurar color azul del texto del toggle */
-    div[data-testid="stToggle"] label {
+    /* Selector de alta especificidad para el texto del Toggle */
+    div[data-testid="stToggle"] label p {
+        font-size: 2.0rem !important; /* Prueba con 1.5rem o 20px */
         color: #00d4ff !important;
         font-weight: bold !important;
-        font-size: 2.5rem !important; /* Ajusta este valor (1.25rem, 1.5rem, etc.) */
     }
 
     
