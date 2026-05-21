@@ -20,17 +20,20 @@ import streamlit.components.v1 as components
 components.html(
     """
     <script>
-        function hideBranding() {
-            var elements = window.parent.document.querySelectorAll('footer, .viewerBadge_container__1QSob');
-            for (var i = 0; i < elements.length; i++) {
-                elements[i].style.display = 'none';
+        // Usamos setInterval para asegurar que el script se aplique aunque Streamlit tarde en cargar
+        var interval = setInterval(function() {
+            var elements = window.parent.document.querySelectorAll('button[data-testid="stExpander"]');
+            if (elements.length > 0) {
+                elements.forEach(function(el) {
+                    el.style.color = "#00d4ff";
+                    el.style.fontWeight = "bold";
+                });
+                clearInterval(interval); // Detener el bucle una vez aplicado
             }
-        }
-        // Ejecutar constantemente para asegurar que no vuelva a aparecer
-        setInterval(hideBranding, 500);
+        }, 500);
     </script>
     """,
-    height=0,
+    height=0
 )
 
 # Autorrefresco automático cada 5 minutos (300 segundos)
@@ -192,23 +195,7 @@ st.markdown("""
         font-size: 1.5rem !important;
         font-weight: bold !important;
     }
-     /* Ocultar el pie de página de Streamlit de forma agresiva */
-    footer {
-        visibility: hidden !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
 
-    /* Ocultar cualquier elemento que contenga el enlace de Streamlit */
-    #root > div:last-child {
-        display: none !important;
-    }
-     footer {
-        position: fixed !important;
-        bottom: -100px !important; /* Lo mueve fuera del área visible */
-        visibility: hidden !important;
-    }
     
 </style>
 """, unsafe_allow_html=True)
