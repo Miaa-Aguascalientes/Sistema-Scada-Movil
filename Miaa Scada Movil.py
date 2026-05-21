@@ -508,9 +508,13 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     # Obtenemos el último nivel del tanque por separado como pediste
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
+    
+    if 'mostrar_indicadores' not in st.session_state:
+        st.session_state.mostrar_indicadores = False
+        
+    st.session_state.mostrar_indicadores = st.toggle("⚙️ Indicadores de Operación", value=st.session_state.mostrar_indicadores)
 # Aquí inicia el botón desplegable para los indicadores
-    with st.expander("⚙️ Indicadores", expanded=False):
+    if st.session_state.mostrar_indicadores:
         # Fila 1: 3 elementos principales
         f1 = st.columns(3)
         renderizar_tarjeta_kpi(f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
