@@ -622,6 +622,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             )
         )
         st.plotly_chart(fig, use_container_width=True)
+        st.divider()
 
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
