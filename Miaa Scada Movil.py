@@ -153,21 +153,21 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    /* Selector de alta especificidad para Streamlit */
-    div[data-testid="stExpander"] div[role="button"] p,
-    div[data-testid="stExpander"] div[role="button"] span {
+    /* Estilo agresivo para forzar el color en el encabezado del expansor */
+    [data-testid="stExpander"] button {
         color: #00d4ff !important;
-        font-weight: 800 !important;
+        font-weight: bold !important;
     }
 
-    /* Forzar el color del icono también */
-    div[data-testid="stExpander"] div[role="button"] svg {
+    /* Forzar el color del texto interno que Streamlit oculta o tematiza */
+    [data-testid="stExpander"] button div p {
+        color: #00d4ff !important;
+        font-weight: bold !important;
+    }
+
+    /* Forzar el color del icono */
+    [data-testid="stExpander"] button svg {
         fill: #00d4ff !important;
-    }
-
-    /* Esto elimina cualquier color heredado del tema */
-    .streamlit-expanderHeader {
-        color: #00d4ff !important;
     }
     
 </style>
