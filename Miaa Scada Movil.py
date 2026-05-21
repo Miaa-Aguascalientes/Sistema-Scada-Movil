@@ -195,7 +195,18 @@ st.markdown("""
         font-size: 1.5rem !important;
         font-weight: bold !important;
     }
+     /* Ocultar el pie de página de Streamlit de forma agresiva */
+    footer {
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 
+    /* Ocultar cualquier elemento que contenga el enlace de Streamlit */
+    #root > div:last-child {
+        display: none !important;
+    }
      footer {
         position: fixed !important;
         bottom: -100px !important; /* Lo mueve fuera del área visible */
