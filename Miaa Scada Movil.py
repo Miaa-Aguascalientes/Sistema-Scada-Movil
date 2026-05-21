@@ -184,6 +184,13 @@ st.markdown("""
         color: #00d4ff !important;
         font-weight: bold !important;
     }
+    
+    /* Aumentar tamaño y asegurar color azul del texto del toggle */
+    div[data-testid="stToggle"] label {
+        color: #00d4ff !important;
+        font-weight: bold !important;
+        font-size: 1.25rem !important; /* Ajusta este valor (1.25rem, 1.5rem, etc.) */
+    }
 
     
 </style>
@@ -507,14 +514,11 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     # Obtenemos el último nivel del tanque por separado como pediste
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
-
-
-    st.markdown("<h4 style='color:#00d4ff;'>Indicadores de Operación</h4>", unsafe_allow_html=True)
     
     if 'mostrar_ind' not in st.session_state:
         st.session_state.mostrar_ind = False
         
-    st.session_state.mostrar_ind = st.toggle("Activar visualización", value=st.session_state.mostrar_ind)
+    st.session_state.mostrar_ind = st.toggle("Indicadores de Operación", value=st.session_state.mostrar_ind)
 # Aquí inicia el botón desplegable para los indicadores
     if st.session_state.mostrar_ind:
         # Fila 1: 3 elementos principales
