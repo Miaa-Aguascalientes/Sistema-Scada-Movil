@@ -40,8 +40,7 @@ def get_mysql_telemetria_engine():
         engine = create_engine(
             f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
             pool_recycle=3600,
-            pool_pre_ping=True,
-            connect_args={'connect_timeout': 10}
+            pool_pre_ping=True
         )
         return engine
     except Exception as e:
@@ -152,19 +151,9 @@ st.markdown("""
         flex: 1 1 calc(33.33% - 1rem) !important;
         min-width: 80px !important;
     }
+    
 
-    /* Forzar color en botones de expansión en todo el documento */
-    [data-testid="stExpander"] button[role="button"] div,
-    [data-testid="stExpander"] button[role="button"] p,
-    [data-testid="stExpander"] button[role="button"] span {
-        color: #00d4ff !important;
-        font-weight: 800 !important;
-    }
 
-    /* Forzar el icono de engranaje a color azul */
-    [data-testid="stExpander"] button[role="button"] svg {
-        fill: #00d4ff !important;
-    }
     
 </style>
 """, unsafe_allow_html=True)
@@ -439,23 +428,6 @@ with c2:
 
 st.divider()
 
-st.markdown("""
-<style>
-    /* Forzar color en botones de expansión en todo el documento */
-    [data-testid="stExpander"] button[role="button"] div,
-    [data-testid="stExpander"] button[role="button"] p,
-    [data-testid="stExpander"] button[role="button"] span {
-        color: #00d4ff !important;
-        font-weight: 800 !important;
-    }
-
-    /* Forzar el icono de engranaje a color azul */
-    [data-testid="stExpander"] button[role="button"] svg {
-        fill: #00d4ff !important;
-    }
-    
-</style>
-""", unsafe_allow_html=True)
 # 4. SECCION ----------------------------------------- RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA -------------------------------------------------------------
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
@@ -506,7 +478,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
 
 # Aquí inicia el botón desplegable para los indicadores
-    with st.expander("⚙️ Indicadores de Operación", expanded=False):
+    with st.expander("⚙️ Indicadores", expanded=True):
         # Fila 1: 3 elementos principales
         f1 = st.columns(3)
         renderizar_tarjeta_kpi(f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
