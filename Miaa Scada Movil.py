@@ -185,31 +185,23 @@ st.markdown("""
         color: #00d4ff !important;
         font-weight: bold !important;
     } 
-    
-    /* 1. Hacemos que el contenedor del toggle sea más largo (100% de la columna) */
+
+    /* 1. Seleccionamos el contenedor del Toggle */
     div[data-testid="stToggle"] {
-        width: 100% !important; 
+        width: 100% !important;
         max-width: 100% !important;
-    }
-
-    /* 2. El contorno blanco (Targeting al elemento que visualmente es el switch) */
-    div[data-testid="stToggle"] [role="switch"] {
         border: 2px solid white !important;
-        border-radius: 25px !important;
-        background-color: transparent !important;
+        border-radius: 10px !important;
+        padding: 10px !important;
     }
-
-    /* 3. Asegurar que el texto sea grande y azul */
+    
+    /* 2. Seleccionamos el texto del Toggle */
     div[data-testid="stToggle"] label p {
         color: #00d4ff !important;
+        font-size: 1.5rem !important;
         font-weight: bold !important;
-        font-size: 1.3rem !important;
     }
 
-    /* 4. Opcional: Aumentar el tamaño del círculo del toggle para que se vea proporcionado */
-    div[data-testid="stToggle"] [role="switch"]::before {
-        transform: scale(1.2); 
-    }
     
 </style>
 """, unsafe_allow_html=True)
