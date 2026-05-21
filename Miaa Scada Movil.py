@@ -152,9 +152,10 @@ st.markdown("""
         flex: 1 1 calc(33.33% - 1rem) !important;
         min-width: 80px !important;
     }
-    
 
-
+    /* Esto cambia el color del texto del expansor */
+    .streamlit-expanderHeader {
+        color: white !important;
     
 </style>
 """, unsafe_allow_html=True)
@@ -479,7 +480,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
 
 # Aquí inicia el botón desplegable para los indicadores
-    with st.expander("⚙️ Indicadores", expanded=True):
+    with st.expander("⚙️ Indicadores", expanded=False):
         # Fila 1: 3 elementos principales
         f1 = st.columns(3)
         renderizar_tarjeta_kpi(f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
