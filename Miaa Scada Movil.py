@@ -188,7 +188,7 @@ st.markdown("""
     
     /* Estilo para hacer el toggle más largo y con contorno blanco */
     div[data-testid="stToggle"] {
-        width: 30% !important; /* Lo hace tan ancho como el contenedor */
+        width: 100% !important; /* Lo hace tan ancho como el contenedor */
         max-width: 300px;       /* Ajusta este valor si prefieres una medida fija */
     }
 
