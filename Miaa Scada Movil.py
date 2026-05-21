@@ -41,6 +41,7 @@ def get_mysql_telemetria_engine():
             f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
             pool_recycle=3600,
             pool_pre_ping=True
+            connect_args={'connect_timeout': 10}
         )
         return engine
     except Exception as e:
