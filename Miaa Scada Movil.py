@@ -196,6 +196,11 @@ st.markdown("""
         font-weight: bold !important;
     }
 
+    /* Ocultar específicamente el pie de página de Streamlit Cloud */
+    footer[data-testid="stFooter"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
     
 </style>
 """, unsafe_allow_html=True)
