@@ -189,7 +189,7 @@ st.markdown("""
     div[data-testid="stToggle"] label {
         color: #00d4ff !important;
         font-weight: bold !important;
-        font-size: 1.7rem !important; /* Ajusta este valor (1.25rem, 1.5rem, etc.) */
+        font-size: 2.5rem !important; /* Ajusta este valor (1.25rem, 1.5rem, etc.) */
     }
 
     
