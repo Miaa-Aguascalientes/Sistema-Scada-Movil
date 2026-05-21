@@ -16,6 +16,26 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+import streamlit.components.v1 as components
+components.html(
+    """
+    <script>
+        // Usamos setInterval para asegurar que el script se aplique aunque Streamlit tarde en cargar
+        var interval = setInterval(function() {
+            var elements = window.parent.document.querySelectorAll('button[data-testid="stExpander"]');
+            if (elements.length > 0) {
+                elements.forEach(function(el) {
+                    el.style.color = "#00d4ff";
+                    el.style.fontWeight = "bold";
+                });
+                clearInterval(interval); // Detener el bucle una vez aplicado
+            }
+        }, 500);
+    </script>
+    """,
+    height=0
+)
+
 # Autorrefresco automático cada 5 minutos (300 segundos)
 if 'scada_refresh' not in st.session_state:
     st.session_state.scada_refresh = 0
@@ -489,14 +509,8 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
 
-# Definimos el estado del toggle si no existe
-if 'mostrar_indicadores' not in st.session_state:
-    st.session_state.mostrar_indicadores = False
-
-# El toggle actúa como el interruptor (ON/OFF)
-st.session_state.mostrar_indicadores = st.toggle("⚙️ Indicadores de Operación", value=st.session_state.mostrar_indicadores)
-
-if st.session_state.mostrar_indicadores:
+# Mantenemos el expander (porque el error era por orden del código, no por el componente)
+with st.expander("⚙️ Indicadores de Operación", expanded=False):
     # Fila 1
     f1 = st.columns(3)
     renderizar_tarjeta_kpi(f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
@@ -505,13 +519,17 @@ if st.session_state.mostrar_indicadores:
     
     # Fila 2
     f2 = st.columns(2)
-    renderizar_tarjeta_kpi(f2[0], "Nivel Dinamico Prom.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "Mts", "#ff00b4")
-    renderizar_tarjeta_kpi(f2[1], "Sumergencia Prom.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "Mts", "#a800ff")
+    renderizar_tarjeta_kpi(f2[0], "Nivivel Dinamico Prom.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "Mts", "#ff00b4")
+    renderizar_tarjeta_kpi(f2[1], "Sumergencia de la bomba Prom.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "Mts", "#a800ff")
     
-    # Fila 3
+    # Fila 3 - LOS CÁLCULOS DEBEN IR AQUÍ ADENTRO O ANTES DEL EXPANDER
     f3 = st.columns(2)
-    # ... (cálculos de voltaje/amperaje igual que antes)
+    v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
+    v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
     renderizar_tarjeta_kpi(f3[0], "Voltaje Prom", f"{v_prom:,.1f}", "Volt", "#fffb00")
+    
+    a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
+    a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
     renderizar_tarjeta_kpi(f3[1], "Amperaje Prom", f"{a_prom:,.1f}", "Amp", "#ff8000")
     
 
