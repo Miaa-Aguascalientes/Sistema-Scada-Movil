@@ -16,7 +16,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
 import streamlit.components.v1 as components
 components.html(
     """
@@ -458,7 +457,7 @@ st.markdown('''
 ''', unsafe_allow_html=True)
 
 # PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
-st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🎛️ Panel Scada</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
 with c1:
@@ -578,7 +577,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         {"titulo": "Caudal y Presión", "icono": "💧", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
         {"titulo": "Voltaje y Amperaje", "icono": "⚡", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
         {"titulo": "Nivel Tanque", "icono": "🛢️", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
-        {"titulo": "Niveles de Pozo", "icono": "🕳️", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
+        {"titulo": "Niveles de Pozo", "icono": "🌀", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
     ]
 
     for grupo in grupos:
