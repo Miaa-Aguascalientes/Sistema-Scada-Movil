@@ -153,9 +153,11 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    /* Esto cambia el color del texto del expansor */
+    /* Nueva regla para el color del texto del expansor */
     .streamlit-expanderHeader {
         color: white !important;
+        font-weight: bold;
+    }
     
 </style>
 """, unsafe_allow_html=True)
