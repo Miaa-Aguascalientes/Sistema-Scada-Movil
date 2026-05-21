@@ -153,18 +153,17 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    /* Inyección forzada de color mediante CSS Custom Properties */
-    div[data-testid="stExpander"] button p, 
-    div[data-testid="stExpander"] button span,
-    div[data-testid="stExpander"] div[role="button"] {
+    /* Forzar color en botones de expansión en todo el documento */
+    [data-testid="stExpander"] button[role="button"] div,
+    [data-testid="stExpander"] button[role="button"] p,
+    [data-testid="stExpander"] button[role="button"] span {
         color: #00d4ff !important;
-        fill: #00d4ff !important;
         font-weight: 800 !important;
     }
-    
-    /* Esta regla busca el componente interno específico del encabezado */
-    [data-testid="stExpander"] [data-baseweb="button"] {
-        color: #00d4ff !important;
+
+    /* Forzar el icono de engranaje a color azul */
+    [data-testid="stExpander"] button[role="button"] svg {
+        fill: #00d4ff !important;
     }
     
 </style>
