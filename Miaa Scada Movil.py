@@ -88,6 +88,13 @@ def verificar_credenciales(usuario_input, password_input):
 #1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
+    /* Forzar color blanco en las etiquetas del formulario */
+    div[data-testid="stForm"] label {
+    color: white !important;
+    font-weight: bold !important;
+    }
+
+
     .stApp { background-color: #050a10 !important; }
     .block-container { padding: 10px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
