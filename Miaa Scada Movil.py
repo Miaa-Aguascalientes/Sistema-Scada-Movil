@@ -15,19 +15,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-st.markdown("""
-<style>
-    /* Forzar al navegador a renderizar en oscuro */
-    :root {
-        color-scheme: dark;
-    }
-    
-    /* Fondo oscuro sólido para toda la app */
-    .stApp {
-        background-color: #050a10 !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+
 
 import streamlit.components.v1 as components
 components.html(
