@@ -622,7 +622,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             )
         )
         st.plotly_chart(fig, use_container_width=True)
-        st.divider()
+        st.markdown("<hr style='border: 2px solid white;'>", unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
