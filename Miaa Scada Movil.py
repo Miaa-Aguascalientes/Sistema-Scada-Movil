@@ -624,7 +624,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         st.plotly_chart(fig, use_container_width=True)
         st.markdown(
             """
-            <hr style='border: 1px solid white; margin-top: -15px; margin-bottom: 15px;'>
+            <hr style='border: 1px solid white; margin-top: -20px; margin-bottom: 15px;'>
             """, 
             unsafe_allow_html=True
         )
