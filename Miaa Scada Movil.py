@@ -179,11 +179,10 @@ st.markdown("""
         min-width: 80px !important;
     }
     
-    /* Selector directo para el texto del toggle */
-    div[data-testid="stToggle"] label {
+    /* Esto afectará a TODOS los checkboxes, asegurando que se vean azules */
+    div[data-testid="stCheckbox"] label p {
         color: #00d4ff !important;
         font-weight: bold !important;
-        font-size: 1.2rem !important;
     }
 
     
