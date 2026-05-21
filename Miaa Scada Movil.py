@@ -439,6 +439,23 @@ with c2:
 
 st.divider()
 
+st.markdown("""
+<style>
+    /* Forzar color en botones de expansión en todo el documento */
+    [data-testid="stExpander"] button[role="button"] div,
+    [data-testid="stExpander"] button[role="button"] p,
+    [data-testid="stExpander"] button[role="button"] span {
+        color: #00d4ff !important;
+        font-weight: 800 !important;
+    }
+
+    /* Forzar el icono de engranaje a color azul */
+    [data-testid="stExpander"] button[role="button"] svg {
+        fill: #00d4ff !important;
+    }
+    
+</style>
+""", unsafe_allow_html=True)
 # 4. SECCION ----------------------------------------- RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA -------------------------------------------------------------
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
