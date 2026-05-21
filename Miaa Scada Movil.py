@@ -575,22 +575,17 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     
 # --- ESTRUCTURA DE GRUPOS ---
     grupos = [
-        {"titulo": "Caudal y Presión", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
-        {"titulo": "Voltaje y Amperaje", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
-        {"titulo": "Nivel Tanque", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
-        {"titulo": "Niveles de Pozo", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
+        {"titulo": "Caudal y Presión", "icono": "💧", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
+        {"titulo": "Voltaje y Amperaje", "icono": "⚡", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
+        {"titulo": "Nivel Tanque", "icono": "🛢️", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
+        {"titulo": "Niveles de Pozo", "icono": "🕳️", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
     ]
 
     for grupo in grupos:
         tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
         if not tags_en_grupo: continue
 
-        grupos = [
-            {"titulo": "Caudal y Presión", "icono": "💧", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
-            {"titulo": "Voltaje y Amperaje", "icono": "⚡", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
-            {"titulo": "Nivel Tanque", "icono": "🛢️", "tags": [('nivel_tanque', "Tanque (m)", '#00ffcc')]},
-            {"titulo": "Niveles de Pozo", "icono": "🕳️", "tags": [('nivel_dinamico', "Dinámico (m)", '#ff00b4'), ('sumergencia', "Sumergencia (m)", '#a800ff')]}
-        ]
+
         
         st.markdown(f'<h3 style="color: white;">{grupo["icono"]} {grupo["titulo"]}</h3>', unsafe_allow_html=True)
         fig = go.Figure()
