@@ -484,7 +484,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     id_pozo = st.session_state.activo_id
     info_p = mapa_pozos_dict.get(id_pozo)
     
-    st.markdown(f"<h3 style='color:#00d4ff;'>📊 Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
 
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
     opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2, key="sel_rango_pozo")
