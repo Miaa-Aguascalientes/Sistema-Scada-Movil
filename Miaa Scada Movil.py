@@ -153,21 +153,18 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    /* Estilo agresivo para forzar el color en el encabezado del expansor */
-    [data-testid="stExpander"] button {
+    /* Inyección forzada de color mediante CSS Custom Properties */
+    div[data-testid="stExpander"] button p, 
+    div[data-testid="stExpander"] button span,
+    div[data-testid="stExpander"] div[role="button"] {
         color: #00d4ff !important;
-        font-weight: bold !important;
-    }
-
-    /* Forzar el color del texto interno que Streamlit oculta o tematiza */
-    [data-testid="stExpander"] button div p {
-        color: #00d4ff !important;
-        font-weight: bold !important;
-    }
-
-    /* Forzar el color del icono */
-    [data-testid="stExpander"] button svg {
         fill: #00d4ff !important;
+        font-weight: 800 !important;
+    }
+    
+    /* Esta regla busca el componente interno específico del encabezado */
+    [data-testid="stExpander"] [data-baseweb="button"] {
+        color: #00d4ff !important;
     }
     
 </style>
