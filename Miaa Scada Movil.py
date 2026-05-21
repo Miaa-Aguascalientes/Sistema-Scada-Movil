@@ -181,6 +181,7 @@ st.markdown("""
 
     /* Esto afectará a TODOS los checkboxes, asegurando que se vean azules */
     div[data-testid="stCheckbox"] label p {
+        font-size: 2.0rem !important; /* Prueba con 1.5rem o 20px */
         color: #00d4ff !important;
         font-weight: bold !important;
     } 
