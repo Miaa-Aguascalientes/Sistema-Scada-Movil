@@ -157,7 +157,7 @@ st.markdown("""
     .streamlit-expanderHeader, 
     .streamlit-expanderHeader p, 
     .streamlit-expanderHeader span {
-        color: white !important;
+        color: #00d4ff !important;
         font-weight: bold !important;
     }
     
