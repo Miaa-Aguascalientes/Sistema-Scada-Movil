@@ -514,7 +514,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     if 'mostrar_ind' not in st.session_state:
         st.session_state.mostrar_ind = False
         
-    st.session_state.mostrar_ind = st.checkbox("Mostrar indicadores", value=st.session_state.mostrar_ind)
+    st.session_state.mostrar_ind = st.toggle("Activar visualización", value=st.session_state.mostrar_ind)
 # Aquí inicia el botón desplegable para los indicadores
     if st.session_state.mostrar_ind:
         # Fila 1: 3 elementos principales
