@@ -153,12 +153,21 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    /* Regla reforzada para el encabezado del expansor */
-    .streamlit-expanderHeader, 
-    .streamlit-expanderHeader p, 
-    .streamlit-expanderHeader span {
+    /* Selector de alta especificidad para Streamlit */
+    div[data-testid="stExpander"] div[role="button"] p,
+    div[data-testid="stExpander"] div[role="button"] span {
         color: #00d4ff !important;
-        font-weight: bold !important;
+        font-weight: 800 !important;
+    }
+
+    /* Forzar el color del icono también */
+    div[data-testid="stExpander"] div[role="button"] svg {
+        fill: #00d4ff !important;
+    }
+
+    /* Esto elimina cualquier color heredado del tema */
+    .streamlit-expanderHeader {
+        color: #00d4ff !important;
     }
     
 </style>
