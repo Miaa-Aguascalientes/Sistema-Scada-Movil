@@ -1,4 +1,4 @@
-name: Despertar Sincronizador MIAA (Clicker)
+name: Despertar Sistema Scada Movil MIAA (Clicker)
 
 on:
   schedule:
@@ -36,7 +36,7 @@ jobs:
             
             try {
               console.log('Navegando a la App MIAA...');
-              await page.goto('https://sistema-scada-movil.streamlit.app', { 
+              await page.goto('https://sistema-scada-smartphone.streamlit.app', { 
                 waitUntil: 'networkidle', 
                 timeout: 60000 
               });
