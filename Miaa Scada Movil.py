@@ -7,6 +7,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import time
+import pytz
 
 # Configuración de página optimizada para móviles
 st.set_page_config(
@@ -483,35 +484,56 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     id_pozo = st.session_state.activo_id
     info_p = mapa_pozos_dict.get(id_pozo)
 
-    # 1. Obtener estado de la bomba
-    data_bomba = cargar_datos_scada([info_p['bomba']])
-    val_bomba, fecha_str = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
-    
-    # Obtener el último timestamp registrado para validar comunicación
-    # Usamos la fecha del tag de bomba (o puedes usar cualquier tag de voltaje)
-    try:
-        fecha_ultima = datetime.strptime(fecha_str, '%d/%m/%Y %H:%M')
-        hace_tres_horas = datetime.now() - timedelta(hours=3)
-        en_comunicacion = fecha_ultima > hace_tres_horas
-    except:
-        en_comunicacion = False
+    # 1. Definir zona horaria de México
+    mexico_tz = pytz.timezone('America/Mexico_City')
 
-    # Definir estados visuales
-    if not en_comunicacion:
+    # 2. Obtener fechas de todos los voltajes disponibles
+    tags_voltaje = [v for v in info_p.get('voltajes_l', []) if v and v != 'N/A']
+    data_voltaje = cargar_datos_scada(tags_voltaje)
+    
+    fechas_lectura = []
+    for tag in tags_voltaje:
+        _, fecha_str = data_voltaje.get(tag, (0.0, None))
+        if fecha_str and fecha_str != "N/A":
+            try:
+                dt = datetime.strptime(fecha_str, '%d/%m/%Y %H:%M')
+                fechas_lectura.append(dt)
+            except:
+                continue
+    
+    # 3. Determinar estado de comunicación
+    if fechas_lectura:
+        ultima_fecha_db = max(fechas_lectura) # La fecha más reciente encontrada
+        ahora = datetime.now(mexico_tz).replace(tzinfo=None) # Tiempo actual ajustado
+        
+        # Si la diferencia es mayor a 3 horas, es falla
+        es_falla = (ahora - ultima_fecha_db) > timedelta(hours=3)
+        fecha_ultima_valida = ultima_fecha_db.strftime('%d/%m/%Y %H:%M')
+    else:
+        es_falla = True
+        fecha_ultima_valida = "Sin datos"
+
+    # 4. Estado de la bomba (para cuando SI hay comunicación)
+    data_bomba = cargar_datos_scada([info_p['bomba']])
+    val_bomba, _ = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
+
+    # 5. Definición de colores y textos
+    if es_falla:
         estado_texto = "FALLA DE COMUNICACIÓN"
-        color_bomba = "#ffaa00" # Naranja para alerta
+        color_bomba = "#ffaa00"
         glow_bomba = "0 0 15px #ffaa00"
     else:
         estado_texto = "ENCENDIDA" if float(val_bomba) > 0 else "APAGADA"
         color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
         glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
 
-    # INDICADOR DE ESTADO CON VALIDACIÓN DE TIEMPO
+    # Renderizado
+    st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     st.markdown(f'''
         <div style="border: 2px solid {color_bomba}; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
             <p style="color: white; font-size: 10px; margin: 0; text-transform: uppercase;">Estado del Pozo</p>
             <p style="color: {color_bomba}; font-size: 20px; font-weight: bold; margin: 0;">{estado_texto}</p>
-            {"<p style='color: white; font-size: 9px; margin-top: 5px;'>Última lectura: " + fecha_str + "</p>" if not en_comunicacion else ""}
+            <p style="color: white; font-size: 9px; margin-top: 5px;">Última actualización: {fecha_ultima_valida}</p>
         </div>
     ''', unsafe_allow_html=True)
 
