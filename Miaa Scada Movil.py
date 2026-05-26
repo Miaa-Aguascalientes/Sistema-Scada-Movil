@@ -482,8 +482,23 @@ def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
 if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- Seleccionar --":
     id_pozo = st.session_state.activo_id
     info_p = mapa_pozos_dict.get(id_pozo)
+
+    # 1. Obtener estado de la bomba
+    data_bomba = cargar_datos_scada([info_p['bomba']])
+    val_bomba, fecha_bomba = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
+    estado_texto = "ENCENDIDA" if float(val_bomba) > 0 else "APAGADA"
+    color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
+    glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
     
     st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
+
+    # INDICADOR DE ESTADO DE BOMBA
+    st.markdown(f'''
+        <div style="border: 2px solid {color_bomba}; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
+            <p style="color: white; font-size: 10px; margin: 0; text-transform: uppercase;">Estado Actual de Bomba</p>
+            <p style="color: {color_bomba}; font-size: 20px; font-weight: bold; margin: 0;">{estado_texto}</p>
+        </div>
+    ''', unsafe_allow_html=True)
 
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
     opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2, key="sel_rango_pozo")
