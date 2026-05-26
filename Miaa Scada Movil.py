@@ -485,18 +485,33 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
 
     # 1. Obtener estado de la bomba
     data_bomba = cargar_datos_scada([info_p['bomba']])
-    val_bomba, fecha_bomba = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
-    estado_texto = "ENCENDIDA" if float(val_bomba) > 0 else "APAGADA"
-    color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
-    glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
+    val_bomba, fecha_str = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
     
-    st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
+    # Obtener el último timestamp registrado para validar comunicación
+    # Usamos la fecha del tag de bomba (o puedes usar cualquier tag de voltaje)
+    try:
+        fecha_ultima = datetime.strptime(fecha_str, '%d/%m/%Y %H:%M')
+        hace_tres_horas = datetime.now() - timedelta(hours=3)
+        en_comunicacion = fecha_ultima > hace_tres_horas
+    except:
+        en_comunicacion = False
 
-    # INDICADOR DE ESTADO DE BOMBA
+    # Definir estados visuales
+    if not en_comunicacion:
+        estado_texto = "FALLA DE COMUNICACIÓN"
+        color_bomba = "#ffaa00" # Naranja para alerta
+        glow_bomba = "0 0 15px #ffaa00"
+    else:
+        estado_texto = "ENCENDIDA" if float(val_bomba) > 0 else "APAGADA"
+        color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
+        glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
+
+    # INDICADOR DE ESTADO CON VALIDACIÓN DE TIEMPO
     st.markdown(f'''
         <div style="border: 2px solid {color_bomba}; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
-            <p style="color: white; font-size: 10px; margin: 0; text-transform: uppercase;">Estado Actual de Bomba</p>
+            <p style="color: white; font-size: 10px; margin: 0; text-transform: uppercase;">Estado del Pozo</p>
             <p style="color: {color_bomba}; font-size: 20px; font-weight: bold; margin: 0;">{estado_texto}</p>
+            {"<p style='color: white; font-size: 9px; margin-top: 5px;'>Última lectura: " + fecha_str + "</p>" if not en_comunicacion else ""}
         </div>
     ''', unsafe_allow_html=True)
 
