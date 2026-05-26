@@ -523,17 +523,17 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         color_bomba = "#ffaa00"
         glow_bomba = "0 0 15px #ffaa00"
     else:
-        estado_texto = "ENCENDIDA" if float(val_bomba) > 0 else "APAGADA"
+        estado_texto = "Bomba Encendida" if float(val_bomba) > 0 else "Bomba Apagada"
         color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
         glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
 
     # Renderizado
     st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     st.markdown(f'''
-        <div style="border: 2px solid {color_bomba}; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
+        <div style="border: 2px solid {color_bomba}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
             <p style="color: white; font-size: 10px; margin: 0; text-transform: uppercase;">Estado del Pozo</p>
             <p style="color: {color_bomba}; font-size: 20px; font-weight: bold; margin: 0;">{estado_texto}</p>
-            <p style="color: white; font-size: 9px; margin-top: 5px;">Última actualización: {fecha_ultima_valida}</p>
+            <p style="color: white; font-size: 12px; margin-top: 5px;">Última actualización: {fecha_ultima_valida}</p>
         </div>
     ''', unsafe_allow_html=True)
 
