@@ -15,3 +15,4 @@ kaleido==0.2.1
 pytz
 scipy
 scikit-learn
+sklearn.linear_model
