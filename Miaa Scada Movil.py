@@ -697,7 +697,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
 
 # ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
 
-if st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != "-- Seleccionar --":
+elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != "-- Seleccionar --":
     id_tq = st.session_state.activo_id
     info_t = mapa_tanques_dict.get(id_tq)
     
@@ -808,8 +808,7 @@ if st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != "-
     
         st.error(f"Error cargando tanque: {e}")
 
-import numpy as np
-from scipy import stats
+
 # -------------------------------------------------------------------------
 # SEGUNDO GRÁFICO: PREDICCIÓN CON REGRESIÓN LINEAL (7 DÍAS)
 # -------------------------------------------------------------------------
