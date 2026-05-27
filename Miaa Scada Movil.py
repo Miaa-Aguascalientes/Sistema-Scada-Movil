@@ -861,8 +861,7 @@ if not df_hist_proy.empty and len(df_hist_proy) > 10:
     # Alerta simple si la proyección sobrepasa el límite
     if future_y[-1] > info_t['nivel_max']:
         st.error(f"⚠️ Alerta: La tendencia actual indica riesgo de derrame en los próximos 7 días.")
-else:
-    st.info("Datos insuficientes para proyectar el comportamiento del nivel.")
+
 
 
 # ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
