@@ -803,7 +803,51 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
         else:
             st.warning("Sin datos para este tanque en el periodo elegido.")
     except Exception as e:
+    
         st.error(f"Error cargando tanque: {e}")
+
+# -------------------------------------------------------------------------
+    # SEGUNDO GRÁFICO: PREDICCIÓN A 7 DÍAS
+    # -------------------------------------------------------------------------
+    st.markdown("<h4 style='color:#00d4ff; margin-top:30px;'>🔮 Proyección de Nivel (7 días)</h4>", unsafe_allow_html=True)
+
+    # 1. Obtenemos datos de las últimas 24 horas para calcular la tendencia
+    df_tendencia = df_hist[df_hist['FECHA'] >= (datetime.now() - timedelta(days=1))]
+    
+    if not df_tendencia.empty and len(df_tendencia) > 5:
+        # Calculamos la pendiente (promedio de cambio por hora)
+        # Esto es una simplificación lineal de la tendencia actual
+        delta_val = df_tendencia['VALUE'].iloc[-1] - df_tendencia['VALUE'].iloc[0]
+        delta_time_hours = (df_tendencia['FECHA'].iloc[-1] - df_tendencia['FECHA'].iloc[0]).total_seconds() / 3600
+        pendiente = delta_val / delta_time_hours if delta_time_hours > 0 else 0
+        
+        # Generar fechas futuras
+        futuro_fechas = [datetime.now() + timedelta(hours=i) for i in range(0, 168, 6)] # Intervalos de 6 horas
+        futuro_valores = [max(0, float(ultimo_nivel) + (pendiente * i)) for i in range(0, 168, 6)]
+        
+        fig_pred = go.Figure()
+        
+        # Línea de historia reciente
+        fig_pred.add_trace(go.Scatter(x=df_hist['FECHA'].tail(20), y=df_hist['VALUE'].tail(20), 
+                                      name="Nivel Real", line=dict(color='#00d4ff', width=2)))
+        
+        # Línea de predicción
+        fig_pred.add_trace(go.Scatter(x=futuro_fechas, y=futuro_valores, 
+                                      name="Proyección", line=dict(color='#ffaa00', width=2, dash='dash')))
+        
+        # Línea de nivel máximo (referencia)
+        fig_pred.add_trace(go.Scatter(x=[futuro_fechas[0], futuro_fechas[-1]], y=[nivel_max, nivel_max], 
+                                      name="Límite Máximo", line=dict(color='red', width=1, dash='dot')))
+
+        fig_pred.update_layout(
+            template="plotly_dark", height=300, margin=dict(t=30, b=30, l=10, r=10),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            hovermode="x unified", showlegend=True,
+            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=9))
+        )
+        st.plotly_chart(fig_pred, use_container_width=True)
+    else:
+        st.info("Datos insuficientes para generar una predicción automática.")
 
 # ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
 
