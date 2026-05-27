@@ -701,22 +701,26 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>🛢️  Análisis de Nivel: {info_t['nombre']}</h3>", unsafe_allow_html=True)
 
-    # --- NUEVO: OBTENER ÚLTIMO NIVEL ---
+    # --- OBTENER DATOS ---
     data_tq = cargar_datos_scada([info_t['tag_nivel']])
     ultimo_nivel, fecha_lectura = data_tq.get(info_t['tag_nivel'], (0.0, "N/A"))
+    nivel_max = info_t.get('nivel_max', 0.0)
     
-    # Renderizar el indicador visual igual al de tu imagen
+    # Renderizar el indicador visual incluyendo el límite máximo
     st.markdown(f'''
         <div style="border: 2px solid #00d4ff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; background: rgba(0, 212, 255, 0.05);">
             <p style="color: white; font-size: 12px; margin: 0; font-weight: bold;">Nivel de tanque actual</p>
             <p style="color: white; font-size: 32px; font-weight: bold; margin: 0;">{float(ultimo_nivel):,.2f} <span style="font-size: 18px; color: #00d4ff;">Mts</span></p>
-            <p style="color: white; font-size: 10px; margin: 0;">Última lectura: {fecha_lectura}</p>
+            <p style="color: #cccccc; font-size: 11px; margin-top: 5px;">
+                Nivel Máximo Permitido: <span style="color: #ff4b4b; font-weight: bold;">{float(nivel_max):,.2f} Mts</span>
+            </p>
+            <p style="color: white; font-size: 10px; margin-top: 5px;">Última lectura: {fecha_lectura}</p>
         </div>
     ''', unsafe_allow_html=True)
     
 # 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
-    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=0) # Index 0 para empezar en 'Hoy'
+    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=2) # Index 0 para empezar en 'Hoy'
     
     hoy_dt = datetime.now()
     f_fin = hoy_dt
