@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import time
 import pytz
-import numpy as np
-from scipy import stats
 
 # Configuración de página optimizada para móviles
 st.set_page_config(
@@ -805,63 +803,7 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
         else:
             st.warning("Sin datos para este tanque en el periodo elegido.")
     except Exception as e:
-    
         st.error(f"Error cargando tanque: {e}")
-
-
-# -------------------------------------------------------------------------
-# SEGUNDO GRÁFICO: PREDICCIÓN CON REGRESIÓN LINEAL (7 DÍAS)
-# -------------------------------------------------------------------------
-st.markdown("<h4 style='color:#00d4ff; margin-top:30px;'>🔮 Proyección de Nivel (Tendencia 7 días)</h4>", unsafe_allow_html=True)
-
-# 1. Obtener los datos históricos de los últimos 7 días
-df_hist_proy = obtener_historia_7_dias(info_t['tag_nivel'])
-
-if not df_hist_proy.empty and len(df_hist_proy) > 10:
-    # Convertir fechas a valores numéricos para la regresión (timestamp)
-    x_vals = (df_hist_proy['FECHA'] - df_hist_proy['FECHA'].min()).dt.total_seconds() / 3600 # horas
-    y_vals = df_hist_proy['VALUE']
-    
-    # Calcular regresión lineal: y = mx + b
-    slope, intercept, r_value, p_value, std_err = stats.linregress(x_vals, y_vals)
-    
-    # Crear puntos para la proyección (168 horas = 7 días)
-    last_x = x_vals.iloc[-1]
-    future_x = np.linspace(last_x, last_x + 168, 20)
-    future_y = slope * future_x + intercept
-    
-    # Fechas para el eje X
-    future_dates = [df_hist_proy['FECHA'].iloc[-1] + timedelta(hours=h) for h in (future_x - last_x)]
-    
-    fig_pred = go.Figure()
-    
-    # Línea histórica
-    fig_pred.add_trace(go.Scatter(x=df_hist_proy['FECHA'], y=y_vals, name="Nivel Real", line=dict(color='#00d4ff', width=2)))
-    
-    # Línea de proyección
-    fig_pred.add_trace(go.Scatter(x=future_dates, y=future_y, name="Tendencia Proyectada", line=dict(color='#ffaa00', width=2, dash='dash')))
-    
-    # Línea de nivel máximo (Obtenido de tu objeto info_t)
-    fig_pred.add_trace(go.Scatter(
-        x=[df_hist_proy['FECHA'].iloc[0], future_dates[-1]], 
-        y=[info_t['nivel_max'], info_t['nivel_max']], 
-        name="Límite Derrame", 
-        line=dict(color='#ff4b4b', width=2, dash='dot')
-    ))
-    
-    fig_pred.update_layout(
-        template="plotly_dark", height=300, margin=dict(t=30, b=30, l=10, r=10),
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        hovermode="x unified",
-        legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center")
-    )
-    st.plotly_chart(fig_pred, use_container_width=True)
-    
-    # Alerta simple si la proyección sobrepasa el límite
-    if future_y[-1] > info_t['nivel_max']:
-        st.error(f"⚠️ Alerta: La tendencia actual indica riesgo de derrame en los próximos 7 días.")
-
-
 
 # ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
 
