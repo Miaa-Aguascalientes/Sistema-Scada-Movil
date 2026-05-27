@@ -862,6 +862,7 @@ if not df_hist_proy.empty and len(df_hist_proy) > 10:
 else:
     st.info("Datos insuficientes para proyectar el comportamiento del nivel.")
 
+
 # ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
 
 elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id != "-- Seleccionar --":
