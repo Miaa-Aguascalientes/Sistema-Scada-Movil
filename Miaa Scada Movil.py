@@ -122,24 +122,30 @@ def verificar_credenciales(usuario_input, password_input):
 #1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
+    /* Configuración base */
     .stApp { background-color: #050a10 !important; }
     .block-container { padding: 10px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
     
-    /* ELIMINAR FRANJA AZUL: Apuntamos al contenedor interno del input */
-    div[data-baseweb="input"] {
+    /* CORRECCIÓN DE LA FRANJA AZUL */
+    /* Apuntamos al contenedor principal del input */
+    div[data-testid="stTextInputRootElement"] {
         background-color: #0d1b2a !important;
         border: 1px solid #1f4068 !important;
+        box-shadow: none !important;
+    }
+    
+    /* Asegura que el icono y el área del password no tengan fondo azul */
+    div[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"] {
+        background-color: transparent !important;
     }
 
-    /* Ajuste fino para el texto dentro del input */
     .stTextInput input {
-        background-color: #0d1b2a !important;
+        background-color: transparent !important;
         color: #00d4ff !important;
     }
 
-    /* Asegurar que al estar enfocado no se vuelva azul */
-    div[data-baseweb="input"]:focus-within {
+    div[data-testid="stTextInputRootElement"]:focus-within {
         border-color: #00d4ff !important;
         box-shadow: none !important;
     }
