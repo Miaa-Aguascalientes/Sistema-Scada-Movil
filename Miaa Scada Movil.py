@@ -122,49 +122,52 @@ def verificar_credenciales(usuario_input, password_input):
 #1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* Estilo unificado para todos los inputs */
+    /* Configuración base */
+    .stApp { background-color: #050a10 !important; }
+    .block-container { padding: 10px !important; max-width: 100% !important; }
+    header, footer { visibility: hidden !important; }
+    
+    /* EFECTOS Y ANIMACIONES (Tu diseño original) */
+    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
+    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
+    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
+    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
+    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* ESTILO UNIFICADO DE INPUTS (Sin franjas azules) */
     div[data-testid="stTextInputRootElement"] {
         background-color: #0d1b2a !important;
         border: 1px solid #1f4068 !important;
         border-radius: 0px !important;
         box-shadow: none !important;
-        padding: 0px 10px !important;
         height: 40px !important;
     }
-
-    /* Eliminar el fondo azul específico de Streamlit en inputs de password */
+    /* Elimina el fondo del contenedor del icono de password */
     div[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"] {
         background-color: transparent !important;
     }
-
-    /* Estilo del texto dentro de los inputs */
     .stTextInput input {
         background-color: transparent !important;
         color: #00d4ff !important;
-        font-family: 'Courier New', monospace;
         font-size: 15px !important;
-        padding: 0 !important;
     }
-
-    /* Estado de foco unificado */
     div[data-testid="stTextInputRootElement"]:focus-within {
         border: 1px solid #00d4ff !important;
-        box-shadow: none !important;
     }
 
-    /* Resto de tu diseño (Logo, HUD, Botones) sin cambios */
-    .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 10px !important; max-width: 100% !important; }
-    header, footer { visibility: hidden !important; }
-    
+    /* RESTO DE TUS ESTILOS */
     .stButton button { 
         background: #00d4ff !important; color: #050a10 !important; font-weight: bold !important; 
-        width: 100%; height: 45px; border: none !important; border-radius: 0px !important;
+        width: 100%; height: 45px; border: none !important; 
     }
-    .login-box { background: rgba(0, 212, 255, 0.05); border-left: 8px solid #00d4ff; padding: 30px; margin-top: 50px; width: 100%; }
+    .login-box { 
+        background: rgba(0, 212, 255, 0.05); border-left: 6px solid #00d4ff; 
+        padding: 20px; margin-top: 20px; width: 100%; 
+    }
 </style>
 """, unsafe_allow_html=True)
-
 # Aseguramos que col_log exista antes de usarla (ajusta el índice si tenías más columnas)
 if not st.session_state.autenticado:
     col_vis, col_log = st.columns([1, 1])
