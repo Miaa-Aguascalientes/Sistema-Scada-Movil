@@ -126,12 +126,33 @@ st.markdown("""
     .block-container { padding: 10px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
     
-    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
-    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
-    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
-    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
-    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
+    /* ELIMINAR FRANJA AZUL: Apuntamos al contenedor interno del input */
+    div[data-baseweb="input"] {
+        background-color: #0d1b2a !important;
+        border: 1px solid #1f4068 !important;
+    }
+
+    /* Ajuste fino para el texto dentro del input */
+    .stTextInput input {
+        background-color: #0d1b2a !important;
+        color: #00d4ff !important;
+    }
+
+    /* Asegurar que al estar enfocado no se vuelva azul */
+    div[data-baseweb="input"]:focus-within {
+        border-color: #00d4ff !important;
+        box-shadow: none !important;
+    }
+
+    /* Resto de tus estilos originales */
+    .stButton button, div[data-testid="stForm"] button { 
+        background: #00d4ff !important; 
+        color: #050a10 !important; 
+        font-weight: bold !important; 
+        width: 100%; 
+        height: 45px; 
+        border: none !important;
+    }
     
     .login-box { 
         background: rgba(0, 212, 255, 0.05); 
@@ -141,78 +162,34 @@ st.markdown("""
         width: 100%;
     }
     
+    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
+    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
+    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
+    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
+    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     
-    /* MODIFICACIÓN PARA ELIMINAR FRANJA AZUL */
-    .stTextInput input { 
-        background-color: #0d1b2a !important; 
-        color: #00d4ff !important; 
-        border: 1px solid #1f4068 !important; 
-        box-shadow: none !important; 
-    }
-    .stTextInput input:focus {
-        border: 1px solid #00d4ff !important;
-        box-shadow: none !important;
-    }
-    
-    .stButton button, div[data-testid="stForm"] button { 
-        background: #00d4ff !important; 
-        color: #050a10 !important; 
-        font-weight: bold !important; 
-        width: 100%; 
-        height: 45px; 
-        border: none !important;
-    }
-    div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
-    
     .card-indicador {
-        background: #0d1f2d;
-        border: 1px solid #00d4ff;
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        margin-bottom: 8px;
+        background: #0d1f2d; border: 1px solid #00d4ff; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 8px;
     }
     .label-indicador { color: #888; font-size: 11px; margin: 0; }
     .value-indicador { color: #00d4ff; font-size: 16px; font-weight: bold; margin: 0; }
     
-    div[data-testid="stSelectbox"] label {
-        color: #00d4ff !important;
-        font-weight: bold !important;
-    }
-
-    .logo-header {
-        width: 200px;
-        height: auto;
-        display: block;
-        margin: 0 auto 20px auto;
-    }
+    div[data-testid="stSelectbox"] label { color: #00d4ff !important; font-weight: bold !important; }
+    .logo-header { width: 200px; height: auto; display: block; margin: 0 auto 20px auto; }
 
     .kpi-pozo-container [data-testid="column"] {
         width: calc(33.33% - 1rem) !important;
         flex: 1 1 calc(33.33% - 1rem) !important;
         min-width: 80px !important;
     }
-
-    div[data-testid="stCheckbox"] label p {
-        font-size: 1.1rem !important;
-        color: #00d4ff !important;
-        font-weight: bold !important;
-    } 
+    div[data-testid="stCheckbox"] label p { font-size: 1.1rem !important; color: #00d4ff !important; font-weight: bold !important; } 
 
     div[data-testid="stToggle"] {
-        width: 100% !important;
-        max-width: 100% !important;
-        border: 2px solid white !important;
-        border-radius: 10px !important;
-        padding: 10px !important;
+        width: 100% !important; max-width: 100% !important; border: 2px solid white !important; border-radius: 10px !important; padding: 10px !important;
     }
-    
-    div[data-testid="stToggle"] label p {
-        color: #00d4ff !important;
-        font-size: 1.5rem !important;
-        font-weight: bold !important;
-    }
+    div[data-testid="stToggle"] label p { color: #00d4ff !important; font-size: 1.5rem !important; font-weight: bold !important; }
 </style>
 """, unsafe_allow_html=True)
 
