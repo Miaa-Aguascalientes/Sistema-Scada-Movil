@@ -133,7 +133,7 @@ st.markdown("""
     .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
     .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
     .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .logo-miaa { width: 100px; filter: drop-shadow(0 0 10px #00d4ff); }
+    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
     /* ESTILO UNIFICADO DE INPUTS (Sin franjas azules) */
