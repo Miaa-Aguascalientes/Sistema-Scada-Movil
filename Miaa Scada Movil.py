@@ -448,7 +448,7 @@ st.markdown('''
 ''', unsafe_allow_html=True)
 
 # PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
-st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="color:#00d4ff; font-size:14px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
 with c1:
