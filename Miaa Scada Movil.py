@@ -75,20 +75,14 @@ def get_mysql_scada_engine():
     try:
         c = st.secrets["mysql_scada"]
         pwd = urllib.parse.quote_plus(c["password"])
-        engine = create_engine(f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}")
-        
-        # --- AÑADIR ESTE BLOQUE AQUÍ ---
-        @event.listens_for(engine, "connect")
-        def set_big_selects(dbapi_connection, connection_record):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
-            cursor.close()
-        # -------------------------------
-        
-        with engine.connect() as conn: pass 
+        engine = create_engine(
+            f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+            pool_recycle=3600,
+            pool_pre_ping=True
+        )
         return engine
     except Exception as e:
-        st.error(f"Error al conectar a la BD: {e}")
+        st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
         return None
 
 @st.cache_resource
