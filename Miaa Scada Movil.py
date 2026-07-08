@@ -70,6 +70,7 @@ def get_mysql_telemetria_engine():
         st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
         return None
 
+
 from sqlalchemy import create_engine, event
 @st.cache_resource
 def get_mysql_scada_engine():
