@@ -70,6 +70,7 @@ def get_mysql_telemetria_engine():
         st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
         return None
 
+from sqlalchemy import create_engine, event
 @st.cache_resource
 def get_mysql_scada_engine():
     try:
@@ -80,6 +81,15 @@ def get_mysql_scada_engine():
             pool_recycle=3600,
             pool_pre_ping=True
         )
+        @event.listens_for(engine, "connect")
+        def set_big_selects(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
+            cursor.close()
+        # -------------------------------
+        
+        with engine.connect() as conn: pass 
+
         return engine
     except Exception as e:
         st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
