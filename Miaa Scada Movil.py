@@ -122,28 +122,31 @@ def verificar_credenciales(usuario_input, password_input):
 #1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
-  
+    /* Estilos base existentes */
     .stApp { background-color: #050a10 !important; }
     .block-container { padding: 10px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
     
-    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
-    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
-    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
-    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
-    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
-    
-    .login-box { 
-        background: rgba(0, 212, 255, 0.05); 
-        border-left: 6px solid #00d4ff; 
-        padding: 20px; 
-        margin-top: 20px;
-        width: 100%;
+    /* Limpieza específica para el input de PASSWORD */
+    div[data-testid="stTextInput"] input {
+        background-color: #0d1b2a !important;
+        color: #00d4ff !important;
+        border: 1px solid #1f4068 !important;
+        box-shadow: none !important;
     }
-    
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    .stTextInput input { background-color: #0d1b2a !important; color: #00d4ff !important; border: 1px solid #1f4068 !important; }
+
+    /* Eliminar el resplandor azul al hacer clic (foco) */
+    div[data-testid="stTextInput"] input:focus {
+        border: 1px solid #00d4ff !important;
+        box-shadow: none !important;
+    }
+
+    /* Asegurar que el contenedor del input no tenga fondo azul heredado */
+    div[data-testid="stTextInput"] {
+        background-color: transparent !important;
+    }
+
+    /* Resto de tus estilos */
     .stButton button, div[data-testid="stForm"] button { 
         background: #00d4ff !important; 
         color: #050a10 !important; 
@@ -152,9 +155,16 @@ st.markdown("""
         height: 45px; 
         border: none !important;
     }
-    div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
     
-    /* Tarjetas de indicadores de sectores */
+    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
+    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
+    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
+    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
+    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
+    
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
     .card-indicador {
         background: #0d1f2d;
         border: 1px solid #00d4ff;
@@ -166,35 +176,17 @@ st.markdown("""
     .label-indicador { color: #888; font-size: 11px; margin: 0; }
     .value-indicador { color: #00d4ff; font-size: 16px; font-weight: bold; margin: 0; }
     
-    /* Cambiar el color de los labels de los selectbox */
-    div[data-testid="stSelectbox"] label {
-        color: #00d4ff !important;
-        font-weight: bold !important;
-    }
+    div[data-testid="stSelectbox"] label { color: #00d4ff !important; font-weight: bold !important; }
+    .logo-header { width: 200px; height: auto; display: block; margin: 0 auto 20px auto; }
 
-    /* Estilo exclusivo para el logo principal dentro de la App */
-    .logo-header {
-        width: 200px; /* Cambia este valor al tamaño que desees para el logo interno */
-        height: auto;
-        display: block;
-        margin: 0 auto 20px auto; /* Centrado y con margen inferior */
-    }
-
-     /* Solo afecta a los elementos dentro de .kpi-pozo-container */
     .kpi-pozo-container [data-testid="column"] {
         width: calc(33.33% - 1rem) !important;
         flex: 1 1 calc(33.33% - 1rem) !important;
         min-width: 80px !important;
     }
 
-    /* Esto afectará a TODOS los checkboxes, asegurando que se vean azules */
-    div[data-testid="stCheckbox"] label p {
-        font-size: 1.1rem !important; /* Prueba con 1.5rem o 20px */
-        color: #00d4ff !important;
-        font-weight: bold !important;
-    } 
+    div[data-testid="stCheckbox"] label p { font-size: 1.1rem !important; color: #00d4ff !important; font-weight: bold !important; } 
 
-    /* 1. Seleccionamos el contenedor del Toggle */
     div[data-testid="stToggle"] {
         width: 100% !important;
         max-width: 100% !important;
@@ -203,31 +195,13 @@ st.markdown("""
         padding: 10px !important;
     }
     
-    /* 2. Seleccionamos el texto del Toggle */
     div[data-testid="stToggle"] label p {
         color: #00d4ff !important;
         font-size: 1.5rem !important;
         font-weight: bold !important;
     }
-
-    
 </style>
 """, unsafe_allow_html=True)
-
-
-
-if not st.session_state.autenticado:
-    col_vis, col_log = st.columns([1, 1])
-    with col_vis:
-        st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
-        st.markdown('''
-        <div class="visual-core">
-            <div class="ring r1"></div><div class="ring r2"></div>
-            <div class="center-logo">
-                <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
 
     with col_log:
         if not st.session_state.fase_carga:
