@@ -166,6 +166,12 @@ st.markdown("""
         background: rgba(0, 212, 255, 0.05); border-left: 6px solid #00d4ff; 
         padding: 20px; margin-top: 20px; width: 100%; 
     }
+    .logo-header {
+    width: 80px !important; /* <--- CAMBIA ESTE NÚMERO A TU GUSTO */
+    height: auto !important;
+    display: block;
+    margin: 0 auto 20px auto;
+}
 </style>
 """, unsafe_allow_html=True)
 # Aseguramos que col_log exista antes de usarla (ajusta el índice si tenías más columnas)
@@ -445,8 +451,7 @@ if 'activo_tipo' not in st.session_state:
 # LOGOTIPO EN LA PARTE SUPERIOR DE LA APLICACIÓN
 st.markdown('''
     <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" 
-         class="logo-header" 
-         style="width: 30px !important;">
+         class="logo-header">
 ''', unsafe_allow_html=True)
 
 # PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
