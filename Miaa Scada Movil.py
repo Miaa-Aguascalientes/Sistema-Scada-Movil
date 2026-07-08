@@ -217,34 +217,44 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Aseguramos que col_log exista antes de usarla (ajusta el índice si tenías más columnas)
-col_log = st.columns(1)[0] 
+if not st.session_state.autenticado:
+    col_vis, col_log = st.columns([1, 1])
+    with col_vis:
+        st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
+        st.markdown('''
+        <div class="visual-core">
+            <div class="ring r1"></div><div class="ring r2"></div>
+            <div class="center-logo">
+                <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
 
-with col_log:
-    if not st.session_state.fase_carga:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES SCADA</h2>', unsafe_allow_html=True)
-        with st.form("login_form"):
-            u = st.text_input("USUARIO")
-            p = st.text_input("PASSWORD", type="password")
-            if st.form_submit_button("ACCEDER"):
-                rol = verificar_credenciales(u, p)
-                if rol:
-                    st.session_state.temp_rol = rol
-                    st.session_state.fase_carga = True
-                    st.rerun()
-                else:
-                    st.error("❌ ACCESO DENEGADO")
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO MÓVIL...</h2>', unsafe_allow_html=True)
-        st.session_state.autenticado = True
-        st.session_state.rol = st.session_state.temp_rol
-        st.session_state.fase_carga = False
-        st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
-st.stop()
+    with col_log:
+        if not st.session_state.fase_carga:
+            st.markdown('<div class="login-box">', unsafe_allow_html=True)
+            st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES SCADA</h2>', unsafe_allow_html=True)
+            with st.form("login_form"):
+                u = st.text_input("USUARIO")
+                p = st.text_input("PASSWORD", type="password")
+                if st.form_submit_button("ACCEDER"):
+                    rol = verificar_credenciales(u, p)
+                    if rol:
+                        st.session_state.temp_rol = rol
+                        st.session_state.fase_carga = True
+                        st.rerun()
+                    else:
+                        st.error("❌ ACCESO DENEGADO")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="login-box">', unsafe_allow_html=True)
+            st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO MÓVIL...</h2>', unsafe_allow_html=True)
+            st.session_state.autenticado = True
+            st.session_state.rol = st.session_state.temp_rol
+            st.session_state.fase_carga = False
+            st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 
 # 2. SECCION -----------------------------------------------   FUNCIONES DE EXTRACCIÓN DE DATOS SCADA & POSTGRES -----------------------------------------------------------
 def cargar_datos_scada(lista_tags):
