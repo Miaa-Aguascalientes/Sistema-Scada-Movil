@@ -167,7 +167,7 @@ st.markdown("""
         padding: 20px; margin-top: 20px; width: 100%; 
     }
     .logo-header {
-    width: 80px !important; /* <--- CAMBIA ESTE NÚMERO A TU GUSTO */
+    width: 130px !important; /* <--- CAMBIA ESTE NÚMERO A TU GUSTO */
     height: auto !important;
     display: block;
     margin: 0 auto 20px auto;
