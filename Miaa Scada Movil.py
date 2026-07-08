@@ -120,37 +120,11 @@ def verificar_credenciales(usuario_input, password_input):
         return None
 
 #1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
-# 1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown("""
 <style>
     .stApp { background-color: #050a10 !important; }
     .block-container { padding: 10px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
-    
-    /* Input password sin franja azul */
-    div[data-testid="stTextInput"] input {
-        background-color: #0d1b2a !important;
-        color: #00d4ff !important;
-        border: 1px solid #1f4068 !important;
-        box-shadow: none !important;
-    }
-    div[data-testid="stTextInput"] input:focus {
-        border: 1px solid #00d4ff !important;
-        box-shadow: none !important;
-    }
-    div[data-testid="stTextInput"] {
-        background-color: transparent !important;
-    }
-
-    /* Resto de estilos originales */
-    .stButton button, div[data-testid="stForm"] button { 
-        background: #00d4ff !important; 
-        color: #050a10 !important; 
-        font-weight: bold !important; 
-        width: 100%; 
-        height: 45px; 
-        border: none !important;
-    }
     
     .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
     .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
@@ -159,7 +133,37 @@ st.markdown("""
     .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
     .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
     
+    .login-box { 
+        background: rgba(0, 212, 255, 0.05); 
+        border-left: 6px solid #00d4ff; 
+        padding: 20px; 
+        margin-top: 20px;
+        width: 100%;
+    }
+    
     @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    /* MODIFICACIÓN PARA ELIMINAR FRANJA AZUL */
+    .stTextInput input { 
+        background-color: #0d1b2a !important; 
+        color: #00d4ff !important; 
+        border: 1px solid #1f4068 !important; 
+        box-shadow: none !important; 
+    }
+    .stTextInput input:focus {
+        border: 1px solid #00d4ff !important;
+        box-shadow: none !important;
+    }
+    
+    .stButton button, div[data-testid="stForm"] button { 
+        background: #00d4ff !important; 
+        color: #050a10 !important; 
+        font-weight: bold !important; 
+        width: 100%; 
+        height: 45px; 
+        border: none !important;
+    }
+    div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
     
     .card-indicador {
         background: #0d1f2d;
@@ -172,8 +176,17 @@ st.markdown("""
     .label-indicador { color: #888; font-size: 11px; margin: 0; }
     .value-indicador { color: #00d4ff; font-size: 16px; font-weight: bold; margin: 0; }
     
-    div[data-testid="stSelectbox"] label { color: #00d4ff !important; font-weight: bold !important; }
-    .logo-header { width: 200px; height: auto; display: block; margin: 0 auto 20px auto; }
+    div[data-testid="stSelectbox"] label {
+        color: #00d4ff !important;
+        font-weight: bold !important;
+    }
+
+    .logo-header {
+        width: 200px;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px auto;
+    }
 
     .kpi-pozo-container [data-testid="column"] {
         width: calc(33.33% - 1rem) !important;
@@ -181,7 +194,11 @@ st.markdown("""
         min-width: 80px !important;
     }
 
-    div[data-testid="stCheckbox"] label p { font-size: 1.1rem !important; color: #00d4ff !important; font-weight: bold !important; } 
+    div[data-testid="stCheckbox"] label p {
+        font-size: 1.1rem !important;
+        color: #00d4ff !important;
+        font-weight: bold !important;
+    } 
 
     div[data-testid="stToggle"] {
         width: 100% !important;
@@ -190,17 +207,11 @@ st.markdown("""
         border-radius: 10px !important;
         padding: 10px !important;
     }
+    
     div[data-testid="stToggle"] label p {
         color: #00d4ff !important;
         font-size: 1.5rem !important;
         font-weight: bold !important;
-    }
-    .login-box { 
-        background: rgba(0, 212, 255, 0.05); 
-        border-left: 6px solid #00d4ff; 
-        padding: 20px; 
-        margin-top: 20px;
-        width: 100%;
     }
 </style>
 """, unsafe_allow_html=True)
