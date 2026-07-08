@@ -446,7 +446,7 @@ if 'activo_tipo' not in st.session_state:
 st.markdown('''
     <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" 
          class="logo-header" 
-         style="width: 80px !important;">
+         style="width: 30px !important;">
 ''', unsafe_allow_html=True)
 
 # PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
