@@ -194,6 +194,13 @@ st.markdown("""
         font-size: 1.5rem !important;
         font-weight: bold !important;
     }
+    .login-box { 
+        background: rgba(0, 212, 255, 0.05); 
+        border-left: 6px solid #00d4ff; 
+        padding: 20px; 
+        margin-top: 20px;
+        width: 100%;
+    }
 </style>
 """, unsafe_allow_html=True)
 
