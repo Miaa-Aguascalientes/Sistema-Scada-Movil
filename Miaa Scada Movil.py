@@ -444,11 +444,13 @@ if 'activo_tipo' not in st.session_state:
 
 # LOGOTIPO EN LA PARTE SUPERIOR DE LA APLICACIÓN
 st.markdown('''
-    <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-header">
+    <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" 
+         class="logo-header" 
+         style="width: 100px !important;">
 ''', unsafe_allow_html=True)
 
 # PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
-st.markdown('<h2 style="color:#00d4ff; font-size:14px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
 with c1:
