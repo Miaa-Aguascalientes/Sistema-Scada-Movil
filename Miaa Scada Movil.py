@@ -177,13 +177,32 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # 1. SECCION ------------------------------------------------------- ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
+# 1. SECCION ------------------------------------------------------- ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
 st.markdown(
     """
 <style>
-    /* Configuración base */
+    /* Configuración base y reducción total de márgenes superiores */
     .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 10px !important; max-width: 100% !important; }
+    
+    .block-container { 
+        padding-top: 0rem !important; 
+        padding-bottom: 10px !important; 
+        padding-left: 10px !important; 
+        padding-right: 10px !important; 
+        max-width: 100% !important; 
+    }
+    
     header, footer { visibility: hidden !important; }
+    
+    /* Eliminar el espacio superior generado por Streamlit en contenedores principales */
+    .block-container > div:first-child {
+        margin-top: -20px !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div:first-child {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
     
     /* EFECTOS Y ANIMACIONES */
     .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
