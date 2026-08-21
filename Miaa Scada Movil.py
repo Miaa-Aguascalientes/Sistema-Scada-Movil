@@ -1,29 +1,31 @@
-import streamlit as st
-import pandas as pd
-from sqlalchemy import create_engine
-import psycopg2
-import json
-import urllib.parse
 from datetime import datetime, timedelta
-import plotly.graph_objects as go
+import hashlib
+import json
 import time
-import pytz
-from datetime import datetime
+import urllib.parse
 from zoneinfo import ZoneInfo
+import bcrypt
+import base64
+from cryptography.fernet import Fernet
+import pandas as pd
+import psycopg2
+import pytz
+import streamlit as st
+import streamlit.components.v1 as components
+from sqlalchemy import create_engine, event, text
+import plotly.graph_objects as go
 
 # Configuración de página optimizada para móviles
 st.set_page_config(
-    page_title="Sistema Scada Móvil", 
-    page_icon="https://www.miaa.mx/favicon.ico", 
+    page_title="Sistema Scada Móvil",
+    page_icon="https://www.miaa.mx/favicon.ico",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
-import streamlit.components.v1 as components
 components.html(
     """
     <script>
-        // Usamos setInterval para asegurar que el script se aplique aunque Streamlit tarde en cargar
         var interval = setInterval(function() {
             var elements = window.parent.document.querySelectorAll('button[data-testid="stExpander"]');
             if (elements.length > 0) {
@@ -31,103 +33,177 @@ components.html(
                     el.style.color = "#00d4ff";
                     el.style.fontWeight = "bold";
                 });
-                clearInterval(interval); // Detener el bucle una vez aplicado
+                clearInterval(interval);
             }
         }, 500);
     </script>
     """,
-    height=0
+    height=0,
 )
 
 # Autorrefresco automático cada 5 minutos (300 segundos)
-if 'scada_refresh' not in st.session_state:
-    st.session_state.scada_refresh = 0
+if "scada_refresh" not in st.session_state:
+  st.session_state.scada_refresh = 0
 
 # 0. SECCION ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
-if 'autenticado' not in st.session_state:
-    query_params = st.query_params
-    if query_params.get("access") == "granted":
-        st.session_state.autenticado = True
-        st.session_state.rol = query_params.get("role", "usuario")
-    else:
-        st.session_state.autenticado = False
+if "autenticado" not in st.session_state:
+  query_params = st.query_params
+  if query_params.get("access") == "granted":
+    st.session_state.autenticado = True
+    st.session_state.rol = query_params.get("role", "usuario")
+  else:
+    st.session_state.autenticado = False
 
-if 'fase_carga' not in st.session_state:
-    st.session_state.fase_carga = False
+if "fase_carga" not in st.session_state:
+  st.session_state.fase_carga = False
+
 
 @st.cache_resource
 def get_mysql_telemetria_engine():
-    try:
-        c = st.secrets["mysql_telemetria"]
-        pwd = urllib.parse.quote_plus(c["password"])
-        engine = create_engine(
-            f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
-            pool_recycle=3600,
-            pool_pre_ping=True
-        )
-        return engine
-    except Exception as e:
-        st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
-        return None
+  try:
+    c = st.secrets["mysql_telemetria"]
+    pwd = urllib.parse.quote_plus(c["password"])
+    engine = create_engine(
+        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+        pool_recycle=3600,
+        pool_pre_ping=True,
+    )
+    return engine
+  except Exception as e:
+    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
+    return None
 
 
-from sqlalchemy import create_engine, event
 @st.cache_resource
 def get_mysql_scada_engine():
-    try:
-        c = st.secrets["mysql_scada"]
-        pwd = urllib.parse.quote_plus(c["password"])
-        engine = create_engine(
-            f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
-            pool_recycle=3600,
-            pool_pre_ping=True
-        )
-        @event.listens_for(engine, "connect")
-        def set_big_selects(dbapi_connection, connection_record):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
-            cursor.close()
-        # -------------------------------
-        
-        with engine.connect() as conn: pass 
+  try:
+    c = st.secrets["mysql_scada"]
+    pwd = urllib.parse.quote_plus(c["password"])
+    engine = create_engine(
+        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+        pool_recycle=3600,
+        pool_pre_ping=True,
+    )
 
-        return engine
-    except Exception as e:
-        st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
-        return None
+    @event.listens_for(engine, "connect")
+    def set_big_selects(dbapi_connection, connection_record):
+      cursor = dbapi_connection.cursor()
+      cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
+      cursor.close()
+
+    with engine.connect() as conn:
+      pass
+
+    return engine
+  except Exception as e:
+    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
+    return None
+
 
 @st.cache_resource
 def get_postgres_engine():
-    try: 
-        # Simplemente crea y retorna el objeto de conexión
-        conn = psycopg2.connect(**st.secrets["postgres"])
-        return conn
-    except Exception as e: 
-        st.error(f"Error de conexión Postgres: {e}")
-        return None
+  try:
+    conn = psycopg2.connect(**st.secrets["postgres"])
+    return conn
+  except Exception as e:
+    st.error(f"Error de conexión Postgres: {e}")
+    return None
+
+
+# --- LLAVE DE CIFRADO Y FUNCIONES DE CONTRASEÑA ---
+SECRET_FERNET_KEY = b"12345678901234567890123456789012"
+
+
+def get_fernet_cipher():
+  try:
+    key = st.secrets["security"]["fernet_key"].encode()
+  except Exception:
+    key = base64.urlsafe_b64encode(hashlib.sha256(SECRET_FERNET_KEY).digest())
+  return Fernet(key)
+
+
+def desencriptar_pwd(password_cifrada):
+  try:
+    f = get_fernet_cipher()
+    return f.decrypt(password_cifrada.encode()).decode()
+  except Exception:
+    return password_cifrada
+
 
 def verificar_credenciales(usuario_input, password_input):
-    try:
-        engine = get_mysql_telemetria_engine()
-        if engine is None: return None
-        query = f"SELECT password, tipo_usuario FROM usuarios WHERE usuario = '{usuario_input}'"
-        df_user = pd.read_sql(query, engine)
-        if not df_user.empty and str(password_input) == str(df_user['password'].iloc[0]):
-            return df_user['tipo_usuario'].iloc[0]
-        return None
-    except Exception as e:
-        st.error(f"Error al consultar usuario: {e}")
-        return None
+  try:
+    engine = get_mysql_telemetria_engine()
+    if engine is None:
+      return None
 
-#1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
-st.markdown("""
+    query = text(
+        "SELECT password, tipo_usuario FROM usuarios WHERE usuario = :usr"
+    )
+    with engine.connect() as conn:
+      df_user = pd.read_sql(query, conn, params={"usr": usuario_input})
+
+    if df_user.empty:
+      return None
+
+    pwd_almacenada = str(df_user["password"].iloc[0]).strip()
+    tipo_usuario = df_user["tipo_usuario"].iloc[0]
+    pass_ingresada = str(password_input).strip()
+
+    # 1. Validación directa
+    if pass_ingresada == pwd_almacenada:
+      return tipo_usuario
+
+    # 2. Validación por Fernet
+    try:
+      pwd_decifrada = desencriptar_pwd(pwd_almacenada)
+      if pass_ingresada == str(pwd_decifrada).strip():
+        return tipo_usuario
+    except Exception:
+      pass
+
+    # 3. Validación por Bcrypt
+    try:
+      if bcrypt.checkpw(
+          pass_ingresada.encode("utf-8"), pwd_almacenada.encode("utf-8")
+      ):
+        return tipo_usuario
+    except Exception:
+      pass
+
+    return None
+  except Exception as e:
+    st.error(f"Error al consultar usuario: {e}")
+    return None
+
+
+# 1. SECCION ------------------------------------------------------- ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
+st.markdown(
+    """
 <style>
-    /* Configuración base */
+    /* Configuración base y reducción total de márgenes superiores */
     .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 10px !important; max-width: 100% !important; }
+    
+    .block-container { 
+        padding-top: 0rem !important; 
+        padding-bottom: 10px !important; 
+        padding-left: 10px !important; 
+        padding-right: 10px !important; 
+        max-width: 100% !important; 
+    }
+    
     header, footer { visibility: hidden !important; }
     
-    /* EFECTOS Y ANIMACIONES (Tu diseño original) */
+    /* Eliminar el espacio superior generado por Streamlit en contenedores principales */
+    .block-container > div:first-child {
+        margin-top: -20px !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div:first-child {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
+    
+    /* EFECTOS Y ANIMACIONES */
     .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
     .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
     .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
@@ -136,7 +212,7 @@ st.markdown("""
     .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* ESTILO UNIFICADO DE INPUTS (Sin franjas azules) */
+    /* ESTILO UNIFICADO DE INPUTS */
     div[data-testid="stTextInputRootElement"] {
         background-color: #0d1b2a !important;
         border: 1px solid #1f4068 !important;
@@ -144,7 +220,6 @@ st.markdown("""
         box-shadow: none !important;
         height: 40px !important;
     }
-    /* Elimina el fondo del contenedor del icono de password */
     div[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"] {
         background-color: transparent !important;
     }
@@ -157,7 +232,6 @@ st.markdown("""
         border: 1px solid #00d4ff !important;
     }
 
-    /* RESTO DE TUS ESTILOS */
     .stButton button { 
         background: #00d4ff !important; color: #050a10 !important; font-weight: bold !important; 
         width: 100%; height: 45px; border: none !important; 
@@ -167,52 +241,65 @@ st.markdown("""
         padding: 20px; margin-top: 20px; width: 100%; 
     }
     .logo-header {
-    width: 130px !important; /* <--- CAMBIA ESTE NÚMERO A TU GUSTO */
-    height: auto !important;
-    display: block;
-    margin: 0 auto 20px auto;
-}
+        width: 130px !important;
+        height: auto !important;
+        display: block;
+        margin: 0 auto 20px auto;
+    }
 </style>
-""", unsafe_allow_html=True)
-# Aseguramos que col_log exista antes de usarla (ajusta el índice si tenías más columnas)
+""",
+    unsafe_allow_html=True,
+)
+
 if not st.session_state.autenticado:
-    col_vis, col_log = st.columns([1, 1])
-    with col_vis:
-        st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
-        st.markdown('''
+  col_vis, col_log = st.columns([1, 1])
+  with col_vis:
+    st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
+    st.markdown(
+        """
         <div class="visual-core">
             <div class="ring r1"></div><div class="ring r2"></div>
             <div class="center-logo">
                 <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
             </div>
         </div>
-        ''', unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
 
-    with col_log:
-        if not st.session_state.fase_carga:
-            st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES SCADA</h2>', unsafe_allow_html=True)
-            with st.form("login_form"):
-                u = st.text_input("USUARIO")
-                p = st.text_input("PASSWORD", type="password")
-                if st.form_submit_button("ACCEDER"):
-                    rol = verificar_credenciales(u, p)
-                    if rol:
-                        st.session_state.temp_rol = rol
-                        st.session_state.fase_carga = True
-                        st.rerun()
-                    else:
-                        st.error("❌ ACCESO DENEGADO")
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO MÓVIL...</h2>', unsafe_allow_html=True)
-            st.session_state.autenticado = True
-            st.session_state.rol = st.session_state.temp_rol
-            st.session_state.fase_carga = False
+  with col_log:
+    if not st.session_state.fase_carga:
+      st.markdown('<div class="login-box">', unsafe_allow_html=True)
+      st.markdown(
+          '<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES'
+          " SCADA</h2>",
+          unsafe_allow_html=True,
+      )
+      with st.form("login_form"):
+        u = st.text_input("USUARIO")
+        p = st.text_input("PASSWORD", type="password")
+        if st.form_submit_button("ACCEDER"):
+          rol = verificar_credenciales(u, p)
+          if rol:
+            st.session_state.temp_rol = rol
+            st.session_state.fase_carga = True
             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+          else:
+            st.error("❌ ACCESO DENEGADO")
+      st.markdown("</div>", unsafe_allow_html=True)
+    else:
+      st.markdown('<div class="login-box">', unsafe_allow_html=True)
+      st.markdown(
+          '<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO'
+          " MÓVIL...</h2>",
+          unsafe_allow_html=True,
+      )
+      st.session_state.autenticado = True
+      st.session_state.rol = st.session_state.temp_rol
+      st.session_state.fase_carga = False
+      st.rerun()
+      st.markdown("</div>", unsafe_allow_html=True)
+  st.stop()
 
 # 2. SECCION -----------------------------------------------   FUNCIONES DE EXTRACCIÓN DE DATOS SCADA & POSTGRES -----------------------------------------------------------
 def cargar_datos_scada(lista_tags):
