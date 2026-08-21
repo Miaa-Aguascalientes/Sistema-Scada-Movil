@@ -1,31 +1,28 @@
-from datetime import datetime, timedelta
-import hashlib
-import json
-import time
-import urllib.parse
-from zoneinfo import ZoneInfo
-import bcrypt
-import base64
-from cryptography.fernet import Fernet
-import pandas as pd
-import psycopg2
-import pytz
 import streamlit as st
-import streamlit.components.v1 as components
-from sqlalchemy import create_engine, event, text
+import pandas as pd
+from sqlalchemy import create_engine
+import psycopg2
+import json
+import urllib.parse
+from datetime import datetime, timedelta
 import plotly.graph_objects as go
+import time
+import pytz
+from zoneinfo import ZoneInfo
 
 # Configuración de página optimizada para móviles
 st.set_page_config(
-    page_title="Sistema Scada Móvil",
-    page_icon="https://www.miaa.mx/favicon.ico",
+    page_title="Sistema Scada Móvil", 
+    page_icon="https://www.miaa.mx/favicon.ico", 
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="collapsed"
 )
 
+import streamlit.components.v1 as components
 components.html(
     """
     <script>
+        // Usamos setInterval para asegurar que el script se aplique aunque Streamlit tarde en cargar
         var interval = setInterval(function() {
             var elements = window.parent.document.querySelectorAll('button[data-testid="stExpander"]');
             if (elements.length > 0) {
@@ -33,183 +30,103 @@ components.html(
                     el.style.color = "#00d4ff";
                     el.style.fontWeight = "bold";
                 });
-                clearInterval(interval);
+                clearInterval(interval); // Detener el bucle una vez aplicado
             }
         }, 500);
     </script>
     """,
-    height=0,
+    height=0
 )
 
 # Autorrefresco automático cada 5 minutos (300 segundos)
-if "scada_refresh" not in st.session_state:
-  st.session_state.scada_refresh = 0
+if 'scada_refresh' not in st.session_state:
+    st.session_state.scada_refresh = 0
 
 # 0. SECCION ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
-if "autenticado" not in st.session_state:
-  query_params = st.query_params
-  if query_params.get("access") == "granted":
-    st.session_state.autenticado = True
-    st.session_state.rol = query_params.get("role", "usuario")
-  else:
-    st.session_state.autenticado = False
+if 'autenticado' not in st.session_state:
+    query_params = st.query_params
+    if query_params.get("access") == "granted":
+        st.session_state.autenticado = True
+        st.session_state.rol = query_params.get("role", "usuario")
+    else:
+        st.session_state.autenticado = False
 
-if "fase_carga" not in st.session_state:
-  st.session_state.fase_carga = False
-
+if 'fase_carga' not in st.session_state:
+    st.session_state.fase_carga = False
 
 @st.cache_resource
 def get_mysql_telemetria_engine():
-  try:
-    c = st.secrets["mysql_telemetria"]
-    pwd = urllib.parse.quote_plus(c["password"])
-    engine = create_engine(
-        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
-        pool_recycle=3600,
-        pool_pre_ping=True,
-    )
-    return engine
-  except Exception as e:
-    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
-    return None
+    try:
+        c = st.secrets["mysql_telemetria"]
+        pwd = urllib.parse.quote_plus(c["password"])
+        engine = create_engine(
+            f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+            pool_recycle=3600,
+            pool_pre_ping=True
+        )
+        return engine
+    except Exception as e:
+        st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
+        return None
 
 
+from sqlalchemy import create_engine, event
 @st.cache_resource
 def get_mysql_scada_engine():
-  try:
-    c = st.secrets["mysql_scada"]
-    pwd = urllib.parse.quote_plus(c["password"])
-    engine = create_engine(
-        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
-        pool_recycle=3600,
-        pool_pre_ping=True,
-    )
+    try:
+        c = st.secrets["mysql_scada"]
+        pwd = urllib.parse.quote_plus(c["password"])
+        engine = create_engine(
+            f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+            pool_recycle=3600,
+            pool_pre_ping=True
+        )
+        @event.listens_for(engine, "connect")
+        def set_big_selects(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
+            cursor.close()
+        
+        with engine.connect() as conn: pass 
 
-    @event.listens_for(engine, "connect")
-    def set_big_selects(dbapi_connection, connection_record):
-      cursor = dbapi_connection.cursor()
-      cursor.execute("SET SESSION SQL_BIG_SELECTS=1;")
-      cursor.close()
-
-    with engine.connect() as conn:
-      pass
-
-    return engine
-  except Exception as e:
-    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
-    return None
-
+        return engine
+    except Exception as e:
+        st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN SCADA: {e}")
+        return None
 
 @st.cache_resource
 def get_postgres_engine():
-  try:
-    conn = psycopg2.connect(**st.secrets["postgres"])
-    return conn
-  except Exception as e:
-    st.error(f"Error de conexión Postgres: {e}")
-    return None
-
-
-# --- LLAVE DE CIFRADO Y FUNCIONES DE CONTRASEÑA ---
-SECRET_FERNET_KEY = b"12345678901234567890123456789012"
-
-
-def get_fernet_cipher():
-  try:
-    key = st.secrets["security"]["fernet_key"].encode()
-  except Exception:
-    key = base64.urlsafe_b64encode(hashlib.sha256(SECRET_FERNET_KEY).digest())
-  return Fernet(key)
-
-
-def desencriptar_pwd(password_cifrada):
-  try:
-    f = get_fernet_cipher()
-    return f.decrypt(password_cifrada.encode()).decode()
-  except Exception:
-    return password_cifrada
-
+    try: 
+        conn = psycopg2.connect(**st.secrets["postgres"])
+        return conn
+    except Exception as e: 
+        st.error(f"Error de conexión Postgres: {e}")
+        return None
 
 def verificar_credenciales(usuario_input, password_input):
-  try:
-    engine = get_mysql_telemetria_engine()
-    if engine is None:
-      return None
-
-    query = text(
-        "SELECT password, tipo_usuario FROM usuarios WHERE usuario = :usr"
-    )
-    with engine.connect() as conn:
-      df_user = pd.read_sql(query, conn, params={"usr": usuario_input})
-
-    if df_user.empty:
-      return None
-
-    pwd_almacenada = str(df_user["password"].iloc[0]).strip()
-    tipo_usuario = df_user["tipo_usuario"].iloc[0]
-    pass_ingresada = str(password_input).strip()
-
-    # 1. Validación directa
-    if pass_ingresada == pwd_almacenada:
-      return tipo_usuario
-
-    # 2. Validación por Fernet
     try:
-      pwd_decifrada = desencriptar_pwd(pwd_almacenada)
-      if pass_ingresada == str(pwd_decifrada).strip():
-        return tipo_usuario
-    except Exception:
-      pass
+        engine = get_mysql_telemetria_engine()
+        if engine is None: return None
+        query = f"SELECT password, tipo_usuario FROM usuarios WHERE usuario = '{usuario_input}'"
+        df_user = pd.read_sql(query, engine)
+        if not df_user.empty and str(password_input) == str(df_user['password'].iloc[0]):
+            return df_user['tipo_usuario'].iloc[0]
+        return None
+    except Exception as e:
+        st.error(f"Error al consultar usuario: {e}")
+        return None
 
-    # 3. Validación por Bcrypt
-    try:
-      if bcrypt.checkpw(
-          pass_ingresada.encode("utf-8"), pwd_almacenada.encode("utf-8")
-      ):
-        return tipo_usuario
-    except Exception:
-      pass
-
-    return None
-  except Exception as e:
-    st.error(f"Error al consultar usuario: {e}")
-    return None
-
-
-# 1. SECCION ------------------------------------------------------- ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
-st.markdown(
-    """
+#1. SECCION -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
+st.markdown("""
 <style>
-    /* Configuración base y eliminación absoluta de márgenes superiores */
+    /* Configuración base */
     .stApp { background-color: #050a10 !important; }
+    .block-container { padding: 10px !important; max-width: 100% !important; }
+    header, footer { visibility: hidden !important; }
     
-    .block-container { 
-        padding-top: 0rem !important; 
-        padding-bottom: 10px !important; 
-        padding-left: 10px !important; 
-        padding-right: 10px !important; 
-        max-width: 100% !important; 
-    }
-    
-    header, footer { visibility: hidden !important; display: none !important; }
-    
-    /* Forzar elevación de los bloques internos de Streamlit */
-    .block-container > div:first-child {
-        margin-top: -40px !important;
-    }
-    
-    div[data-testid="stVerticalBlock"] {
-        gap: 0.5rem !important;
-    }
-
-    div[data-testid="stVerticalBlock"] > div:first-child {
-        margin-top: 0px !important;
-        padding-top: 0px !important;
-    }
-
-    /* Eliminar el espacio superior del contenedor principal de la página */
-    section.main > div:first-child {
-        padding-top: 0rem !important;
+    /* MODIFICACIÓN EXCLUSIVA PARA ELEVAR EL LOGIN */
+    .login-container {
+        margin-top: -30px !important;
     }
     
     /* EFECTOS Y ANIMACIONES */
@@ -247,7 +164,7 @@ st.markdown(
     }
     .login-box { 
         background: rgba(0, 212, 255, 0.05); border-left: 6px solid #00d4ff; 
-        padding: 20px; margin-top: 20px; width: 100%; 
+        padding: 20px; margin-top: 0px; width: 100%; 
     }
     .logo-header {
         width: 130px !important;
@@ -256,59 +173,48 @@ st.markdown(
         margin: 0 auto 20px auto;
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 if not st.session_state.autenticado:
-  col_vis, col_log = st.columns([1, 1])
-  with col_vis:
-    st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="visual-core">
+    # Contenedor con clase para aplicar el margen superior negativo exclusivamente al login
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    col_vis, col_log = st.columns([1, 1])
+    with col_vis:
+        st.markdown('''
+        <div class="visual-core" style="margin-top: 10px;">
             <div class="ring r1"></div><div class="ring r2"></div>
             <div class="center-logo">
                 <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        ''', unsafe_allow_html=True)
 
-  with col_log:
-    if not st.session_state.fase_carga:
-      st.markdown('<div class="login-box">', unsafe_allow_html=True)
-      st.markdown(
-          '<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES'
-          " SCADA</h2>",
-          unsafe_allow_html=True,
-      )
-      with st.form("login_form"):
-        u = st.text_input("USUARIO")
-        p = st.text_input("PASSWORD", type="password")
-        if st.form_submit_button("ACCEDER"):
-          rol = verificar_credenciales(u, p)
-          if rol:
-            st.session_state.temp_rol = rol
-            st.session_state.fase_carga = True
+    with col_log:
+        if not st.session_state.fase_carga:
+            st.markdown('<div class="login-box">', unsafe_allow_html=True)
+            st.markdown('<h2 style="color:#00d4ff; font-size:16px; margin-top:0px;">// CREDENCIALES SCADA</h2>', unsafe_allow_html=True)
+            with st.form("login_form"):
+                u = st.text_input("USUARIO")
+                p = st.text_input("PASSWORD", type="password")
+                if st.form_submit_button("ACCEDER"):
+                    rol = verificar_credenciales(u, p)
+                    if rol:
+                        st.session_state.temp_rol = rol
+                        st.session_state.fase_carga = True
+                        st.rerun()
+                    else:
+                        st.error("❌ ACCESO DENEGADO")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="login-box">', unsafe_allow_html=True)
+            st.markdown('<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO MÓVIL...</h2>', unsafe_allow_html=True)
+            st.session_state.autenticado = True
+            st.session_state.rol = st.session_state.temp_rol
+            st.session_state.fase_carga = False
             st.rerun()
-          else:
-            st.error("❌ ACCESO DENEGADO")
-      st.markdown("</div>", unsafe_allow_html=True)
-    else:
-      st.markdown('<div class="login-box">', unsafe_allow_html=True)
-      st.markdown(
-          '<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO'
-          " MÓVIL...</h2>",
-          unsafe_allow_html=True,
-      )
-      st.session_state.autenticado = True
-      st.session_state.rol = st.session_state.temp_rol
-      st.session_state.fase_carga = False
-      st.rerun()
-      st.markdown("</div>", unsafe_allow_html=True)
-  st.stop()
+            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 
 # 2. SECCION -----------------------------------------------   FUNCIONES DE EXTRACCIÓN DE DATOS SCADA & POSTGRES -----------------------------------------------------------
 def cargar_datos_scada(lista_tags):
@@ -346,10 +252,8 @@ def obtener_historia_7_dias(tag_name):
     except:
         return pd.DataFrame()
 
-# 2. Función de sectores corregida
 @st.cache_data(ttl=3600)
 def cargar_sectores_poligonos():
-    # Obtenemos una conexión fresca
     conn = psycopg2.connect(**st.secrets["postgres"])
     if not conn: return []
     try:
@@ -363,15 +267,12 @@ def cargar_sectores_poligonos():
                    ST_AsGeoJSON(ST_Transform(geom, 4326)) as geo 
             FROM "Sectorizacion"."Sectores_hidr"
         """
-        # Leemos los datos
         df = pd.read_sql(query, conn)
         return df.to_dict('records')
     except Exception as e:
         st.error(f"Error al cargar sectores: {e}")
         return []
     finally:
-        # El bloque finally asegura que la conexión se cierre SIEMPRE
-        # al terminar la función, exitosa o fallida.
         if conn:
             conn.close()
 
@@ -416,12 +317,8 @@ def cargar_rebombeos_desde_db():
     engine = get_mysql_telemetria_engine()
     if not engine: return {}
     try:
-        # Asegúrate de que tu consulta SELECT incluya estos nuevos campos. 
-        # Si usas "SELECT *", ya deberían estar disponibles en el DataFrame.
         df_rb = pd.read_sql("SELECT * FROM Diccionario_de_rebombeos", engine)
         nuevo_mapa_rb = {}
-        
-        # Filtramos solo los que tienen telemetria
         df_filtrado = df_rb[df_rb['Telemetria'].str.strip() == "Con telemetria"]
         
         for _, row in df_filtrado.iterrows():
@@ -432,7 +329,6 @@ def cargar_rebombeos_desde_db():
                 "nivel_tanque": row['nivel_tanque'],
                 "voltajes_l": [row['voltaje_L1'], row['voltaje_L2'], row['voltaje_L3']],
                 "amperajes_l": [row['amperaje_L1'], row['amperaje_L2'], row['amperaje_L3']],
-                # Nuevos campos integrados
                 "setpoint_dia": row['setpoint_dia'],
                 "setpoint_noche": row['setpoint_noche']
             }
@@ -491,13 +387,12 @@ def cargar_vrp_desde_db():
         return d_res
     except: return {}
 
-# 3. SECCION --------------------------------------------------------- PROCESAMIENTO E INTERFAZ DE ACTIVOS -----------------------------------------------------------------------
+# 3. SECCION ----------------------------------------- PROCESAMIENTO E INTERFAZ DE ACTIVOS -----------------------------------------------------------------------
 sectores = cargar_sectores_poligonos()
 mapa_pozos_dict = cargar_mapa_pozos_desde_db()
 mapa_tanques_dict = cargar_tanques_desde_db()
 mapa_rebombeos_dict = cargar_rebombeos_desde_db()
 
-# Callbacks para mantener la exclusividad mutua de selección en pantalla móvil
 def reset_pozo():
     if st.session_state.opt_pozo != "-- Seleccionar --":
         st.session_state.opt_tanque = "-- Seleccionar --"
@@ -515,11 +410,8 @@ def reset_tanque():
         st.session_state.activo_id = st.session_state.opt_tanque
 
 def reset_rebombeo():
-    # Recargamos para asegurar consistencia
     mapa = cargar_rebombeos_desde_db()
-    # Invertimos para buscar el ID mediante el nombre
     nombres_a_id = {v['nombre']: k for k, v in mapa.items()}
-    
     seleccion = st.session_state.opt_rebombeo
     
     if seleccion != "-- Seleccionar --":
@@ -527,7 +419,6 @@ def reset_rebombeo():
         st.session_state.opt_tanque = "-- Seleccionar --"
         st.session_state.opt_sector = "-- Seleccionar --"
         st.session_state.activo_tipo = "Rebombeo"
-        # Aquí guardamos el ID técnico (ej. 'RB_01') en lugar del nombre
         st.session_state.activo_id = nombres_a_id.get(seleccion)
     else:
         st.session_state.activo_id = "-- Seleccionar --"
@@ -544,13 +435,11 @@ if 'activo_tipo' not in st.session_state:
     st.session_state.activo_tipo = None
     st.session_state.activo_id = None
 
-# LOGOTIPO EN LA PARTE SUPERIOR DE LA APLICACIÓN
 st.markdown('''
     <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" 
          class="logo-header">
 ''', unsafe_allow_html=True)
 
-# PANEL DE CONTROL HUD SUPERIOR - SELECTORES MÓVILES
 st.markdown('<h2 style="color:#00d4ff; font-size:18px; margin-bottom:12px;">🖥️ Panel Scada</h2>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
@@ -559,24 +448,18 @@ with c1:
     st.selectbox("🛢️  Tanques", ["-- Seleccionar --"] + sorted(list(mapa_tanques_dict.keys())), key="opt_tanque", on_change=reset_tanque)
 
 with c2:
-    # 1. Cargamos el mapa filtrado por telemetría
     mapa_rebombeos_dict = cargar_rebombeos_desde_db()
-    
-    # 2. Creamos un diccionario: { "Nombre_visible": "ID_tecnico" }
     opciones_nombres = {v['nombre']: k for k, v in mapa_rebombeos_dict.items()}
-    
-    # 3. Usamos los nombres en el selectbox, pero el 'key' y 'on_change' manejan la lógica
     st.selectbox(
         "🧊 Rebombeos", 
         ["-- Seleccionar --"] + sorted(list(opciones_nombres.keys())), 
         key="opt_rebombeo", 
         on_change=reset_rebombeo
     )
-    
     st.selectbox("🏘️ Sectores Hidráulicos", ["-- Seleccionar --"] + sorted([s['sector'] for s in sectores if s.get('sector')]), key="opt_sector", on_change=reset_sector)
 st.divider()
 
-# 4. SECCION ----------------------------------------- RENDERIZADO DE GRÁFICOS Y MÉTRICAS SEGÚN LA SELECCIÓN ACTIVA -------------------------------------------------------------
+# 4. SECCION ----------------------------------------- RENDERIZADO DE GRÁFICOS Y MÉTRICAS -------------------------------------------------------------
 def renderizar_tarjeta_kpi(col, titulo, valor, unidad, color):
     col.markdown(f'''
         <div style="border: 2px solid {color}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
@@ -589,10 +472,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
     id_pozo = st.session_state.activo_id
     info_p = mapa_pozos_dict.get(id_pozo)
 
-    # 1. Definir zona horaria de México
     mexico_tz = pytz.timezone('America/Mexico_City')
-
-    # 2. Obtener fechas de todos los voltajes disponibles
     tags_voltaje = [v for v in info_p.get('voltajes_l', []) if v and v != 'N/A']
     data_voltaje = cargar_datos_scada(tags_voltaje)
     
@@ -606,23 +486,18 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             except:
                 continue
     
-    # 3. Determinar estado de comunicación
     if fechas_lectura:
-        ultima_fecha_db = max(fechas_lectura) # La fecha más reciente encontrada
-        ahora = datetime.now(mexico_tz).replace(tzinfo=None) # Tiempo actual ajustado
-        
-        # Si la diferencia es mayor a 3 horas, es falla
+        ultima_fecha_db = max(fechas_lectura)
+        ahora = datetime.now(mexico_tz).replace(tzinfo=None)
         es_falla = (ahora - ultima_fecha_db) > timedelta(hours=3)
         fecha_ultima_valida = ultima_fecha_db.strftime('%d/%m/%Y %H:%M')
     else:
         es_falla = True
         fecha_ultima_valida = "Sin datos"
 
-    # 4. Estado de la bomba (para cuando SI hay comunicación)
     data_bomba = cargar_datos_scada([info_p['bomba']])
     val_bomba, _ = data_bomba.get(info_p['bomba'], (0.0, "N/A"))
 
-    # 5. Definición de colores y textos
     if es_falla:
         estado_texto = "FALLA DE COMUNICACIÓN"
         color_bomba = "#ffaa00"
@@ -632,7 +507,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         color_bomba = "#00ff00" if float(val_bomba) > 0 else "#ff4b4b"
         glow_bomba = "0 0 15px #00ff00" if float(val_bomba) > 0 else "0 0 15px #ff4b4b"
 
-    # Renderizado
     st.markdown(f"<h3 style='color:#00d4ff;'>↕️ Detalle de Pozo: {id_pozo}</h3>", unsafe_allow_html=True)
     st.markdown(f'''
         <div style="border: 2px solid {color_bomba}; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 20px; box-shadow: {glow_bomba};">
@@ -657,7 +531,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         rango = st.date_input("Selecciona rango:", [hoy_dt - timedelta(days=7), hoy_dt], key="date_pozo")
         f_ini = rango[0] if len(rango) == 2 else hoy_dt - timedelta(days=7)
 
-  
     tags_consulta = [info_p['caudal'], info_p['presion'], info_p['nivel_dinamico'], info_p['sumergencia'], info_p['nivel_tanque']]
     tags_consulta.extend([v for v in info_p['voltajes_l'] if v and v != 'N/A'])
     tags_consulta.extend([a for a in info_p['amperajes_l'] if a and a != 'N/A'])
@@ -671,8 +544,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         d = df_loc[df_loc['TagName'] == tag]['VALUE']
         return d.mean() if not d.empty else 0.0
 
-    # 3. Renderizado de KPIs
-    # Obtenemos el último nivel del tanque por separado como pediste
     data_tq = cargar_datos_scada([info_p['nivel_tanque']])
     val_nivel_tq = float(data_tq.get(info_p['nivel_tanque'], (0.0, ""))[0])
     
@@ -680,20 +551,16 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         st.session_state.mostrar_ind = False
         
     st.session_state.mostrar_ind = st.toggle("Indicadores de Operación", value=st.session_state.mostrar_ind)
-# Aquí inicia el botón desplegable para los indicadores
     if st.session_state.mostrar_ind:
-        # Fila 1: 3 elementos principales
         f1 = st.columns(3)
         renderizar_tarjeta_kpi(f1[0], "Caudal Prom", f"{get_avg(info_p['caudal'], df):,.2f}", "Lps", "#00d4ff")
         renderizar_tarjeta_kpi(f1[1], "Presión Prom", f"{get_avg(info_p['presion'], df):,.2f}", "Kg/cm²", "#00ff00")
         renderizar_tarjeta_kpi(f1[2], "Nivel de tanque actual", f"{val_nivel_tq:,.2f}", "Mts", "#00ffcc")
         
-        # Fila 2: Niveles de pozo
         f2 = st.columns(2)
         renderizar_tarjeta_kpi(f2[0], "Nivivel Dinamico Prom.", f"{get_avg(info_p['nivel_dinamico'], df):,.2f}", "Mts", "#ff00b4")
         renderizar_tarjeta_kpi(f2[1], "Sumergencia de la bomba Prom.", f"{get_avg(info_p['sumergencia'], df):,.2f}", "Mts", "#a800ff")
         
-        # Fila 3: Eléctricos
         f3 = st.columns(2)
         v_tags = [v for v in info_p['voltajes_l'] if v and v != 'N/A']
         v_prom = sum([get_avg(v, df) for v in v_tags]) / len(v_tags) if v_tags else 0
@@ -702,34 +569,7 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         a_tags = [a for a in info_p['amperajes_l'] if a and a != 'N/A']
         a_prom = sum([get_avg(a, df) for a in a_tags]) / len(a_tags) if a_tags else 0
         renderizar_tarjeta_kpi(f3[1], "Amperaje Prom", f"{a_prom:,.1f}", "Amp", "#ff8000")
-    
 
-    # Configuración de Ejes y Colores (Orden Fijo)
-    config_visual = [
-        ('caudal', "Caudal (Lps)", 'y', '#00d4ff'), 
-        ('nivel_tanque', "Nivel Tanque (m)", 'y5', '#00ffcc'),
-        ('presion', "Presión (Kg/cm²)", 'y2', '#00ff00'),
-        ('nivel_dinamico', "Nivel Dinámico (m)", 'y3', '#ff00b4'),
-        ('sumergencia', "Sumergencia (m)", 'y3', '#a800ff')
-    ]
-    for i, t in enumerate(info_p.get('voltajes_l', [])):
-        if t and t != 'N/A': config_visual.append((t, f"V L{i+1}", 'y4', '#fffb00'))
-    for i, t in enumerate(info_p.get('amperajes_l', [])):
-        if t and t != 'N/A': config_visual.append((t, f"Amp L{i+1}", 'y4', '#ff8000'))
-
-    # Preparar Tags para consulta
-    tags_grafico = []
-    for item in config_visual:
-        real_t = info_p.get(item[0], item[0])
-        if real_t and real_t != 'N/A': 
-            tags_grafico.append({'tag': real_t, 'label': item[1], 'axis': item[2], 'color': item[3]})
-    
-    engine = get_mysql_scada_engine()
-    tags_str = "','".join(list(set([t['tag'] for t in tags_grafico])))
-    q = f"SELECT r.NAME as TagName, h.VALUE, h.FECHA FROM vfitagnumhistory h JOIN VfiTagRef r ON h.GATEID = r.GATEID WHERE r.NAME IN ('{tags_str}') AND h.FECHA BETWEEN '{f_ini}' AND '{hoy_dt}' ORDER BY h.FECHA ASC"
-    df = pd.read_sql(q, engine)
-    
-# --- ESTRUCTURA DE GRUPOS ---
     grupos = [
         {"titulo": "Caudal y Presión", "icono": "💧", "tags": [('caudal', "Caudal (Lps)", '#00d4ff'), ('presion', "Presión (Kg/cm²)", '#00ff00')]},
         {"titulo": "Voltaje y Amperaje", "icono": "⚡", "tags": [(t, f"V L{i+1}", '#fffb00') for i, t in enumerate(info_p.get('voltajes_l', [])) if t != 'N/A'] + [(t, f"Amp L{i+1}", '#ff8000') for i, t in enumerate(info_p.get('amperajes_l', [])) if t != 'N/A']},
@@ -741,8 +581,6 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
         tags_en_grupo = [t for t in grupo['tags'] if info_p.get(t[0], t[0]) in df['TagName'].values]
         if not tags_en_grupo: continue
 
-
-        
         st.markdown(f'<h3 style="color: white;">{grupo["icono"]} {grupo["titulo"]}</h3>', unsafe_allow_html=True)
         fig = go.Figure()
         
@@ -767,37 +605,12 @@ if st.session_state.activo_tipo == "Pozo" and st.session_state.activo_id != "-- 
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)',
             showlegend=True,
-            # Configuración de ejes en blanco
-            xaxis=dict(
-                title_font=dict(color='white'), 
-                tickfont=dict(color='white'), 
-                linecolor='white',
-                gridcolor='rgba(255,255,255,0.1)'
-            ),
-            yaxis=dict(
-                title_font=dict(color='white'), 
-                tickfont=dict(color='white'), 
-                linecolor='white',
-                gridcolor='rgba(255,255,255,0.1)'
-            ),
-            legend=dict(
-                orientation="h", 
-                y=1.2, 
-                x=0.5, 
-                xanchor="center",
-                yanchor="top",
-                font=dict(size=9, color='white') # También agregué color a la leyenda
-            )
+            xaxis=dict(title_font=dict(color='white'), tickfont=dict(color='white'), linecolor='white', gridcolor='rgba(255,255,255,0.1)'),
+            yaxis=dict(title_font=dict(color='white'), tickfont=dict(color='white'), linecolor='white', gridcolor='rgba(255,255,255,0.1)'),
+            legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", yanchor="top", font=dict(size=9, color='white'))
         )
         st.plotly_chart(fig, use_container_width=True)
-        st.markdown(
-            """
-            <hr style='border: 0.5px solid #00d4ff; margin-top: -30px; margin-bottom: 20px;'>
-            """, 
-            unsafe_allow_html=True
-        )
-
-# ------------------------------------------------------------------------------ seccion de tanques ------------------------------------------------------------------------
+        st.markdown("<hr style='border: 0.5px solid #00d4ff; margin-top: -30px; margin-bottom: 20px;'>", unsafe_allow_html=True)
 
 elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != "-- Seleccionar --":
     id_tq = st.session_state.activo_id
@@ -805,12 +618,10 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     
     st.markdown(f"<h3 style='color:#00d4ff;'>🛢️  Análisis de Nivel: {info_t['nombre']}</h3>", unsafe_allow_html=True)
 
-    # --- OBTENER DATOS ---
     data_tq = cargar_datos_scada([info_t['tag_nivel']])
     ultimo_nivel, fecha_lectura = data_tq.get(info_t['tag_nivel'], (0.0, "N/A"))
     nivel_max = info_t.get('nivel_max', 0.0)
     
-    # Renderizar el indicador visual con los textos compactados
     st.markdown(f'''
         <div style="border: 2px solid #00d4ff; padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 20px; background: rgba(0, 212, 255, 0.05);">
             <p style="color: white; font-size: 12px; margin: 0; line-height: 1; font-weight: bold;">Nivel de tanque actual</p>
@@ -826,14 +637,12 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
         </div>
     ''', unsafe_allow_html=True)
     
-# 1. Definición de opciones
     opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
-    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=2) # Index 0 para empezar en 'Hoy'
+    opcion_fecha = st.selectbox("Selecciona rango:", opciones, index=2)
     
     hoy_dt = datetime.now()
     f_fin = hoy_dt
     
-    # 2. Lógica extendida para calcular fechas
     if opcion_fecha == "Hoy":
         f_ini = hoy_dt.replace(hour=0, minute=0, second=0, microsecond=0)
     elif opcion_fecha == "Ayer":
@@ -845,7 +654,6 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     elif opcion_fecha == "Este Mes":
         f_ini = hoy_dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     elif opcion_fecha == "Último Mes":
-        # Primer día del mes actual menos un día nos da el mes anterior
         primer_dia_actual = hoy_dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         f_ini = (primer_dia_actual - timedelta(days=1)).replace(day=1)
         f_fin = primer_dia_actual - timedelta(seconds=1)
@@ -858,10 +666,8 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
         else:
             f_ini = hoy_dt - timedelta(days=7)
 
-    # 3. Consulta SQL ajustada con las nuevas variables
     try:
         engine = get_mysql_scada_engine()
-        # Convertimos las fechas a string con formato explícito para evitar errores de interpretación
         f_ini_str = f_ini.strftime('%Y-%m-%d %H:%M:%S')
         f_fin_str = f_fin.strftime('%Y-%m-%d %H:%M:%S') if isinstance(f_fin, datetime) else f_fin.strftime('%Y-%m-%d %H:%M:%S')
         
@@ -897,13 +703,7 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
                 plot_bgcolor='rgba(0,0,0,0)',
                 hovermode="x unified",
                 showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    y=1.2,
-                    x=0.5,
-                    xanchor="center",
-                    font=dict(size=10, color='white')
-                ),    
+                legend=dict(orientation="h", y=1.2, x=0.5, xanchor="center", font=dict(size=10, color='white')),    
                 xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white'),
                 yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='white')
             )
@@ -913,8 +713,6 @@ elif st.session_state.activo_tipo == "Tanque" and st.session_state.activo_id != 
     except Exception as e:
         st.error(f"Error cargando tanque: {e}")
 
-# ------------------------------------------------------------------------------ seccion de rebombeos ------------------------------------------------------------------------
-
 elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id != "-- Seleccionar --":
     id_rb = st.session_state.activo_id
     info_rb = mapa_rebombeos_dict.get(id_rb)
@@ -922,7 +720,6 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
     if info_rb:
         st.markdown(f"<h3 style='color:#00d4ff;'>🧊 Rebombeo: {info_rb['nombre']}</h3>", unsafe_allow_html=True)
         
-        # 1. Selector de Rango de Fechas
         opciones = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
         opcion_fecha = st.selectbox("Rango de tiempo:", opciones, index=2, key="sel_rango_rb")
         
@@ -945,7 +742,6 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
             f_ini = pd.to_datetime(rango[0]) if len(rango) == 2 else hoy_dt - timedelta(days=7)
             if len(rango) == 2: f_fin = pd.to_datetime(rango[1]).replace(hour=23, minute=59, second=59)
 
-        # 2. Consulta a BD
         engine = get_mysql_scada_engine()
         tag_p, tag_n = info_rb.get('presion'), info_rb.get('nivel_tanque')
         tag_sd, tag_sn = info_rb.get('setpoint_dia'), info_rb.get('setpoint_noche')
@@ -968,7 +764,6 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
             df_hist = df_hist.sort_values('FECHA')
             ultimos = df_hist.groupby('TAG').last()
 
-            # Renderizado de Estado
             p_val = ultimos.loc[tag_p, 'VALUE'] if tag_p in ultimos.index else 0
             estado_texto = "Sistema Encendido" if float(p_val) >= 0.100 else "Sistema Apagado"
             color_estado = "#00ff00" if float(p_val) >= 0.100 else "#ff4b4b"
@@ -980,12 +775,10 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
             </div>
             """, unsafe_allow_html=True)
 
-            # Función Métricas
             def metric_con_icono_al_lado(label, val_tag, icon, unit):
                 val = ultimos.loc[val_tag, 'VALUE'] if val_tag in ultimos.index else 0
                 fecha_obj = ultimos.loc[val_tag, 'FECHA'] if val_tag in ultimos.index else None
                 
-                # Conversión específica para las variables de setpoint indicadas
                 if val_tag in ["RB_099_TRM_SET_POINT_DIA", "RB_099_TRM_SET_POINT_NOCHE"]:
                     val = val / 100.0
                 
@@ -1009,13 +802,11 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
                 </div>
                 """, unsafe_allow_html=True)
 
-            # --- Renderizado de Métricas ---
             metric_con_icono_al_lado("Presión actual del Sistema", tag_p, "🕛", "Kg/cm²")
             metric_con_icono_al_lado("Nivel actual de Tanque", tag_n, "🛢️", "mts")
             metric_con_icono_al_lado("Ajuste Setpoint Día", tag_sd, "☀️", "Kg/cm²")
             metric_con_icono_al_lado("Ajuste Setpoint Noche", tag_sn, "🌙", "Kg/cm²")
 
-            # Gráfico
             st.markdown("<hr style='border: 0; border-top: 2px solid #00d4ff; margin: 20px 0;'>", unsafe_allow_html=True)
             st.markdown("<h4 style='color:#00d4ff; font-size:14px;'>Histórico: Presión y Nivel de Tanque</h4>", unsafe_allow_html=True)
             
@@ -1029,16 +820,11 @@ elif st.session_state.activo_tipo == "Rebombeo" and st.session_state.activo_id !
         else:
             st.warning("No hay datos históricos para el rango seleccionado.")
 
-
-# ------------------------------------------------------------------------------ 
-# ZONA : SECTORES (BLOQUE COMPLETO, INCLUYENDO PUNTOS CRÍTICOS Y CORREGIDO HASTA HOY) 
-# ------------------------------------------------------------------------------
 elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != "-- Seleccionar --":
     sec_id = st.session_state.activo_id
     datos_s = next((s for s in sectores if s['sector'] == sec_id), None)
     
     if datos_s:
-        # --- Cabecera y KPIs ---
         st.markdown(f"<h3 style='color:#00d4ff;'>🏘️ Sector Hidráulico: {sec_id}</h3>", unsafe_allow_html=True)
         
         sc1, sc2, sc3 = st.columns(3)
@@ -1052,12 +838,10 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
             st.markdown(f'<div class="card-indicador"><p class="label-indicador">Consumo Mensual</p><p class="value-indicador">{datos_s.get("Cons_m3",0):,.1f} m³</p></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="card-indicador"><p class="label-indicador">Eficiencia / Balance</p><p class="value-indicador">{datos_s.get("Balance_Estimado",0):,.1f}%</p></div>', unsafe_allow_html=True)
             
-        # --- Selector de Fecha Compartido ---
         st.markdown("<h4 style='color:#00d4ff;'>📈 Histórico de Puntos de Control, Pozos y VRPs</h4>", unsafe_allow_html=True)
         opciones_tiempo = ["Hoy", "Ayer", "Últimos 7 días", "Últimos 14 días", "Este Mes", "Último Mes", "Últimos 6 meses", "Personalizado"]
         rango_seleccionado = st.selectbox("Seleccione el periodo a mostrar", opciones_tiempo, index=2, key="rango_tiempo_sec")
         
-        # Lógica de fechas robusta para incluir el día actual completo sin cortes
         hoy = pd.Timestamp.now().normalize()
         if rango_seleccionado == "Hoy": f_ini_h, f_fin_h = hoy, hoy
         elif rango_seleccionado == "Ayer": f_ini_h, f_fin_h = hoy - pd.Timedelta(days=1), hoy - pd.Timedelta(days=1)
@@ -1077,9 +861,6 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
         str_f_ini = pd.to_datetime(f_ini_h).strftime('%Y-%m-%d 00:00:00')
         str_f_fin = pd.to_datetime(f_fin_h).strftime('%Y-%m-%d 23:59:59')
 
-        # ==============================================================================
-        # 1. GRÁFICO 1: PUNTOS DE CONTROL Y POZOS
-        # ==============================================================================
         dict_reg = {k: v for k, v in cargar_puntos_de_control_desde_db().items() if str(v.get('sector')).strip() == str(sec_id).strip()}
         
         tags_sector = []
@@ -1207,9 +988,6 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
         else:
             st.info("No hay puntos de control ni pozos vinculados a este sector.")
 
-        # ==============================================================================
-        # 2. GRÁFICO 2: VRPs (INDEPENDIENTE, MISMO DISEÑO, 3 COLUMNAS Y SCROLL)
-        # ==============================================================================
         dict_vrp_sec = {k: v for k, v in cargar_vrp_desde_db().items() if str(v.get('sector')).strip() == str(sec_id).strip()}
         tags_vrp_global = []
         mapeo_vrp_global = {}
@@ -1298,15 +1076,11 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
         else:
             st.info("No hay VRPs configuradas para este sector.")
 
-        # ==============================================================================
-        # 3. GRÁFICO 3: PUNTOS CRÍTICOS (LEYENDA EN UNA COLUMNA)
-        # ==============================================================================
         dict_pc_sec = {k: v for k, v in cargar_puntos_criticos_desde_db().items() if str(v.get('sector')).strip() == str(sec_id).strip()}
         tags_pc_global = []
         mapeo_pc_global = {}
 
         for pc_id, pc_info in dict_pc_sec.items():
-            # Usar el domicilio como identificador
             domicilio_pc = pc_info.get('Domicilio', 'Sin Domicilio')
             conf_pc_pts = [
                 ('tag_q', f"PC {pc_id} ({domicilio_pc}) - Q", False),
@@ -1352,7 +1126,6 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
                                 color_pc = f"hsl(200, 100%, {brillo}%)"
                                 idx_pcq += 1
                             else:
-                                # Presiones en gama de verdes
                                 brillo = max(80 - (idx_pcp * 20), 0)
                                 color_pc = f"hsl(145, 100%, {brillo}%)"
                                 idx_pcp += 1
@@ -1377,7 +1150,6 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
                     )
 
                     st.markdown("<p style='color:#ff5555; font-weight:bold; margin-bottom:5px; font-size:13px;'>Variables en este gráfico de Puntos Críticos:</p>", unsafe_allow_html=True)
-                    # AQUÍ: grid-template-columns: repeat(1, 1fr) fuerza una sola columna
                     items_pc_html = "".join([f'<div style="display:flex; align-items:center; margin-bottom:6px; overflow:hidden;"><span style="height:10px; width:16px; background-color:{item["color"]}; display:inline-block; margin-right:5px; border-radius:2px; flex-shrink:0;"></span><span style="color:white; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item["label"]}</span></div>' for item in leyenda_pc_items])
                     st.markdown(f'<div style="display:grid; grid-template-columns: repeat(1, 1fr); gap: 6px 10px; width:100%; margin-bottom:10px;">{items_pc_html}</div>', unsafe_allow_html=True)
 
@@ -1391,8 +1163,6 @@ elif st.session_state.activo_tipo == "Sector" and st.session_state.activo_id != 
         else:
             st.info("No hay Puntos Críticos configurados para este sector.")
 
-
-    # -------------------------------------------------------------------------Parte final ---- -----------------------------------------------------------------------------------    
     st.markdown("""
     <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(0,212,255,0.02); border: 1px dashed #1f4068; border-radius: 10px;">
         <p style="color: #00d4ff; font-family: 'Orbitron', sans-serif; font-size: 14px; margin: 0;">
